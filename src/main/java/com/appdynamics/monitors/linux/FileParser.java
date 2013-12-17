@@ -48,6 +48,8 @@ public class FileParser {
                                     statsMap.putAll(map);   //put in base dir
                                 } else if (name != null){
                                     statsMap.put(name,map); //put in subdir
+                                } else {    //no sub dir name from stats, fall back to description
+                                    statsMap.put(description,map);
                                 }
                             }
                         }

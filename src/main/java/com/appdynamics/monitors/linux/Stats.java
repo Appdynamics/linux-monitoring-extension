@@ -20,13 +20,14 @@ public class Stats {
     private static final String DENTRIES_STAT_PATH = "/proc/sys/fs/dentry-state";
     private static final String LOADAVG_STAT_PATH = "/proc/loadavg";
     private static final String VM_STAT_PATH = "/proc/vmstat";
+    private static final String SOCK_STAT_PATH = "/proc/net/sockstat";
 
     private static final String DISK_USAGE_CMD = "df -kP 2>/dev/null";
 
-    public static final String IDENTIFIER = "__NAME__";
+    public static final String IDENTIFIER = "_ID_";
 
     private static final String SPACE_REGEX = "[\t ]+";
-    private static final String COLON_REGEX = ":+";
+    private static final String SPACE_COLON_REGEX = "[\t :]+";
 
     private static String[] CPU_STATS =
             {IDENTIFIER, "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal", "guest", "guest_nice"};
@@ -59,6 +60,12 @@ public class Stats {
             "page major fault"};
     private static String[] PROC_FILE_STATS = {"processes", "procs_running", "procs_blocked"};
     private static String[] PROC_STATS = {"processes", "running", "blocked"};
+    private static String[] PROC_LOADAVG_STATS = {IDENTIFIER, IDENTIFIER, IDENTIFIER, "runqueue", "count"};
+    private static String[] SOCK_USED_STATS = {IDENTIFIER, IDENTIFIER, "used"};
+    private static String[] TCP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "tcp"};
+    private static String[] UDP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "udp"};
+    private static String[] RAW_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "raw"};
+    private static String[] IPFRAG_STATS = {IDENTIFIER, IDENTIFIER, "ipfrag"};
 
     public Stats(Logger logger) {
         this.logger = logger;
@@ -117,7 +124,7 @@ public class Stats {
     public Map<String, Object> getNetStats(){
         BufferedReader reader = getStream(NET_STAT_PATH);
         FileParser parser = new FileParser(reader, "net", logger);
-        FileParser.StatParser statParser = new FileParser.StatParser(NET_STATS, SPACE_REGEX + "|" + COLON_REGEX) {
+        FileParser.StatParser statParser = new FileParser.StatParser(NET_STATS, SPACE_COLON_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return !line.contains("|");
@@ -246,7 +253,7 @@ public class Stats {
     public Map<String, Object> getMemStats(){
         BufferedReader reader = getStream(MEM_STAT_PATH);
 
-        Map<String, Object> statsMap = getRowStats(reader, SPACE_REGEX + "|" + COLON_REGEX,
+        Map<String, Object> statsMap = getRowStats(reader, SPACE_COLON_REGEX,
                 MEM_FILE_STATS, MEM_STATS, "memory", 0, 1);
 
         try {
@@ -323,26 +330,94 @@ public class Stats {
         Map<String, Object> statsMap = getRowStats(reader, SPACE_REGEX, PROC_FILE_STATS, PROC_STATS, "process", 0, 1);
 
         reader = getStream(LOADAVG_STAT_PATH);
-        try {
-            try {
-                String line = reader.readLine();
-                if (line != null){
-                    line = line.trim();
-                    String[] stats = line.split(SPACE_REGEX + "|/");
-                    statsMap.put("runqueue",stats[3]);
-                    statsMap.put("count",stats[4]);
-                }
-            } finally {
-                reader.close();
+
+        FileParser parser = new FileParser(reader, "process", logger);
+        FileParser.StatParser statParser = new FileParser.StatParser(PROC_LOADAVG_STATS, SPACE_REGEX + "|/") {
+            @Override
+            boolean isMatchType(String line) {
+                return true;
             }
-        } catch (IOException e) {
-            logger.error("Failed to read some process stats");
+
+            @Override
+            boolean isBase(String[] stats) {
+                return true;
+            }
+        };
+        parser.addParser(statParser);
+        Map<String, Object> map = parser.getStats();
+        if (map != null){
+            statsMap.putAll(parser.getStats());
         }
 
         return statsMap;
     }
 
+    public Map<String, Object> getSockStats(){
+        BufferedReader reader = getStream(SOCK_STAT_PATH);
+        FileParser parser = new FileParser(reader, "socket", logger);
+        FileParser.StatParser sockParser = new FileParser.StatParser(SOCK_USED_STATS, SPACE_REGEX) {
+            @Override
+            boolean isMatchType(String line) {
+                return line.startsWith("sockets");
+            }
 
+            @Override
+            boolean isBase(String[] stats) {
+                return true;
+            }
+        };
+        parser.addParser(sockParser);
+        FileParser.StatParser tcpParser = new FileParser.StatParser(TCP_INUSE_STATS, SPACE_REGEX) {
+            @Override
+            boolean isMatchType(String line) {
+                return line.startsWith("TCP");
+            }
+
+            @Override
+            boolean isBase(String[] stats) {
+                return true;
+            }
+        };
+        parser.addParser(tcpParser);
+        FileParser.StatParser udpParser = new FileParser.StatParser(UDP_INUSE_STATS, SPACE_REGEX) {
+            @Override
+            boolean isMatchType(String line) {
+                return line.startsWith("UDP:");
+            }
+
+            @Override
+            boolean isBase(String[] stats) {
+                return true;
+            }
+        };
+        parser.addParser(udpParser);
+        FileParser.StatParser rawParser = new FileParser.StatParser(RAW_INUSE_STATS, SPACE_REGEX) {
+            @Override
+            boolean isMatchType(String line) {
+                return line.startsWith("RAW");
+            }
+
+            @Override
+            boolean isBase(String[] stats) {
+                return true;
+            }
+        };
+        parser.addParser(rawParser);
+        FileParser.StatParser ipfragParser = new FileParser.StatParser(IPFRAG_STATS, SPACE_REGEX) {
+            @Override
+            boolean isMatchType(String line) {
+                return line.startsWith("FRAG");
+            }
+
+            @Override
+            boolean isBase(String[] stats) {
+                return true;
+            }
+        };
+        parser.addParser(ipfragParser);
+
+        return parser.getStats();
+    }
 
 
     private Map<String, Object> getRowStats(BufferedReader reader, String splitRegex,
