@@ -60,6 +60,9 @@ public class FileParser {
             } catch (IOException e) {
                 logError();
             }
+            if (statsMap.size() == 0){
+                statsMap = null;
+            }
         }
 
         return statsMap;
@@ -67,7 +70,7 @@ public class FileParser {
 
     private Map<String, String> getStatMap(String[] keys, String[] vals) {
         Map<String, String> map = new HashMap<String, String>();
-        for (int i=1; i<vals.length && i<keys.length; i++){
+        for (int i=0; i<vals.length && i<keys.length; i++){
             map.put(keys[i],vals[i]);
         }
         return map;

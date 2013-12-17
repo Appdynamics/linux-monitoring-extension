@@ -13,7 +13,6 @@ public class Stats {
     private static final String STAT_PATH = "/proc/stat";
     private static final String NET_STAT_PATH = "/proc/net/dev";
     private static final String DISK_STAT_PATH = "/proc/diskstats";
-    private static final String PARTITION_STAT_PATH = "/proc/partitions";
     private static final String MEM_STAT_PATH = "/proc/meminfo";
     private static final String FILE_NR_STAT_PATH = "/proc/sys/fs/file-nr";
     private static final String INODE_NR_STAT_PATH = "/proc/sys/fs/inode-nr";
@@ -33,7 +32,6 @@ public class Stats {
             {IDENTIFIER, "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal", "guest", "guest_nice"};
     private static String[] PAGE_STATS = {"page", "page in", "page out"};
     private static String[] SWAP_STATS = {"swap", "swap page in", "swap page out"};
-    private static String[] INTERRUPT_STATS = {"intr", "total"};
     private static String[] NET_STATS =
             {IDENTIFIER, "receive bytes", "receive packets", "receive errs", "receive drop", "receive fifo",
                     "receive frame", "receive compressed", "receive multicast", "transmit bytes", "transmit packets",
@@ -67,12 +65,14 @@ public class Stats {
     private static String[] RAW_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "raw"};
     private static String[] IPFRAG_STATS = {IDENTIFIER, IDENTIFIER, "ipfrag"};
 
+
+
     public Stats(Logger logger) {
         this.logger = logger;
     }
 
 
-    public BufferedReader getStream(String filePath) {
+    private BufferedReader getStream(String filePath) {
         File file = new File(filePath);
         BufferedReader reader = null;
         try {
@@ -99,6 +99,20 @@ public class Stats {
         };
         parser.addParser(statParser);
 
+//        Map<String, Object> omap = parser.getStats();
+//        if (omap != null) {
+//            try {
+//                Thread.sleep(1000);
+//                reader = getStream(STAT_PATH);
+//                parser = new FileParser(reader, "CPU", logger);
+//                parser.addParser(statParser);
+//                Map<String, Object> nmap = parser.getStats();
+//
+//
+//            } catch (InterruptedException e) {
+//                logger.error("Interrupted while parsing CPU stats");
+//            }
+//        }
         return parser.getStats();
     }
 
@@ -144,8 +158,12 @@ public class Stats {
         BufferedReader reader;
         try {
             Process process = Runtime.getRuntime().exec(DISK_USAGE_CMD);
+            process.waitFor();
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         } catch (IOException e) {
+            logger.error("Failed to run '"+DISK_USAGE_CMD+"' for disk usage");
+            return null;
+        } catch (InterruptedException e) {
             logger.error("Failed to run '"+DISK_USAGE_CMD+"' for disk usage");
             return null;
         }
@@ -189,7 +207,7 @@ public class Stats {
         parser.addParser(statParser);
         Map<String, Object> map = parser.getStats();
         if (map != null){
-            statsMap.putAll(parser.getStats());
+            statsMap.putAll(map);
         }
 
         parser = new FileParser(inodeReader, "inode", logger);
@@ -207,7 +225,7 @@ public class Stats {
         parser.addParser(statParser);
         map = parser.getStats();
         if (map != null){
-            statsMap.putAll(parser.getStats());
+            statsMap.putAll(map);
         }
 
         parser = new FileParser(dentriesReader, "dcache", logger);
@@ -225,7 +243,7 @@ public class Stats {
         parser.addParser(statParser);
         map = parser.getStats();
         if (map != null){
-            statsMap.putAll(parser.getStats());
+            statsMap.putAll(map);
         }
 
         return statsMap;
@@ -346,7 +364,7 @@ public class Stats {
         parser.addParser(statParser);
         Map<String, Object> map = parser.getStats();
         if (map != null){
-            statsMap.putAll(parser.getStats());
+            statsMap.putAll(map);
         }
 
         return statsMap;
