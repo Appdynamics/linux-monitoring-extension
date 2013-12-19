@@ -99,20 +99,6 @@ public class Stats {
         };
         parser.addParser(statParser);
 
-//        Map<String, Object> omap = parser.getStats();
-//        if (omap != null) {
-//            try {
-//                Thread.sleep(1000);
-//                reader = getStream(STAT_PATH);
-//                parser = new FileParser(reader, "CPU", logger);
-//                parser.addParser(statParser);
-//                Map<String, Object> nmap = parser.getStats();
-//
-//
-//            } catch (InterruptedException e) {
-//                logger.error("Interrupted while parsing CPU stats");
-//            }
-//        }
         return parser.getStats();
     }
 
