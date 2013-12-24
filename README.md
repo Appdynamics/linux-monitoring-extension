@@ -51,6 +51,10 @@ In the AppDynamics Metric Browser, look for: Application Infrastructure Performa
 </tbody>
 </table>
 
+##Custom Dashboard
+
+![](https://raw.github.com/Appdynamics/linux-monitoring-extension/master/LinuxCustom.png)
+
 ##Contributing
 
 Always feel free to fork and contribute any changes directly via [GitHub](https://github.com/Appdynamics/linux-monitoring-extension).
