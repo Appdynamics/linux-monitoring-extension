@@ -19,7 +19,7 @@ The Linux monitoring extension gathers metrics for a linux machine and sends the
 </pre>
 5. Restart the Machine Agent. 
  
-In the AppDynamics Metric Browser, look for: Application Infrastructure Performance  | \<Tier\> | Custom Metrics | Linux
+In the AppDynamics Metric Browser, look for: Application Infrastructure Performance  | \<Tier\> | Custom Metrics | Linux (or the custom path you specified).
 
 ##Directory Structure
 
