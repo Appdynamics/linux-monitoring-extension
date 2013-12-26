@@ -1,6 +1,6 @@
 # AppDynamics Linux Monitoring Extension
 
-This extension works only with the standalone machine agent.
+This extension works only with the standalone machine agent. It has been tested against Linux 2.6.32 on Ubuntu; info to be updated as tests against other distributions and Linux versions are completed.
 
 ##Use Case
 
@@ -57,11 +57,11 @@ In the AppDynamics Metric Browser, look for: Application Infrastructure Performa
 
 ##Contributing
 
-Always feel free to fork and contribute any changes directly via [GitHub](https://github.com/Appdynamics/linux-monitoring-extension).
+Always feel free to fork and contribute any changes directly here on GitHub.
 
 ##Community
 
-Find out more in the [AppSphere] (http://appsphere.appdynamics.com/t5/eXchange/idb-p/extensions) community.
+Find out more in the [AppSphere] (http://appsphere.appdynamics.com/t5/eXchange/Linux-Monitoring-Extension/idi-p/5721) community.
 
 ##Support
 
