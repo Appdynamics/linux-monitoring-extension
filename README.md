@@ -1,10 +1,10 @@
 # AppDynamics Linux Monitoring Extension
 
-This extension works only with the Java agent.
+This extension works only with the standalone machine agent.
 
 ##Use Case
 
-The Linux monitoring extension gathers metrics for a linux machine and sends them to the AppDynamics Metric Browser.
+The Linux monitoring extension gathers metrics for a Linux machine and sends them to the AppDynamics Metric Browser.
 
 
 ##Installation
@@ -61,7 +61,7 @@ Always feel free to fork and contribute any changes directly via [GitHub](https:
 
 ##Community
 
-Find out more in the AppSphere community.
+Find out more in the [AppSphere] (http://appsphere.appdynamics.com/t5/eXchange/idb-p/extensions) community.
 
 ##Support
 
