@@ -49,7 +49,111 @@ In the AppDynamics Metric Browser, look for: Application Infrastructure Performa
 <td class='confluenceTd'> Ant build script to package the project (required only if changing Java code) </td>
 </tr>
 </tbody>
-</table>
+</table>	
+
+## Metrics
+
+### Metric Category: CPU
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|iowait					|IO Wait	
+|system					|System
+|user					|User
+
+### Metric Category: disk
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|I/Os currently in progress		|Current I/O operations	
+|reads completed successfully 	|Number of successfull reads
+|reads merged					|Reads merged
+|sectord read 					|Sectors read
+|sectors written 				|Sectors written 
+|time spent doing I/Os(ms) 		|time in ms spent doing I/Os 
+|time spent reading(ms) 		|time in ms spent reading 
+|time spent writing(ms)			|time in ms spent writing 		 
+|writes completed 				|Number of writes completed 
+|writes merged 					|Number of writes merged
+
+### Metric Category: file
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|agelimit						|Age limit
+|fhalloc						|fhalloc
+|fhfree 						|fhfree
+|unused							|unused
+
+### Metric Category: load average
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|load avg (1 min) 				|Load average 1 Minute
+|load avg (10 min) 				|Load average 10 Minute
+|load avg (15 min) 				|Load average 15 Minute
+
+### Metric Category: memory
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|active 						|Active 
+|buffers 						|Buffers 
+|cached 						|Cached
+|commit limit 					|Commit limit 
+|dirty 							|Dirty
+|free 							|Free 
+|inactive 						|Inactive
+|mapped 						|Mapped
+|real free 						|Real free 
+|real free %					|Real free percent
+|total 							|Total
+|used 							|Used
+|used % 						|Used percent
+
+### Metric Category: network
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|receive bytes 					|Receive bytes
+|receive compressed 			|Receive compressed
+|receive drop 					|Receive drop
+|receive errs 					|Receive errors
+|receive packets 				|Receive packets
+|transmit bytes 				|Transmit bytes
+|transmit compressed 			|Transmit compresses
+|transmit drop 					|Transmit drop
+|transmit errs 					|Transmit errors
+|transmit packets 				|Transmit packets
+
+### Metric Category: page
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|page fault 					|Page fault
+|page in 						|Page in
+|page out 						|Page out
+|swap page in					|Swap page in
+|swap page out					|Swap page out
+
+### Metric Category: process
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|blocked 						|Blocked processes
+|count 							|Total number of processes
+|processes 						|Nnumber of processes
+|running 						|Running processes
+|runqueue 						|Processes in run queue
+
+### Metric Category: socket
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|raw 							|Raw sockets
+|tcp 							|TCP sockets
+|udp 							|UDP sockets
+|used 							|Used sockets
 
 ##Custom Dashboard
 
