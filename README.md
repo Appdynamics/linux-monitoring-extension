@@ -14,7 +14,7 @@ The Linux monitoring extension gathers metrics for a Linux machine and sends the
 3. Unzip the downloaded file
 4. By default all the metrics will be shown under "Custom Metrics|Linux", To change this, open \<machineagent install dir\>/monitors/LinuxMonitor/, open monitor.xml and configure the metric-path parameter.
      <pre>
-     &lt;argument name="metric-path" is-required="false" default-value="" /&gt;
+     &lt;argument name="metric-path" is-required="false" default-value="Custom Metrics|Ubuntu" /&gt;
      
 </pre>
 5. Restart the Machine Agent. 
