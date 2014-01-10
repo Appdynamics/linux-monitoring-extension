@@ -157,7 +157,8 @@ In the AppDynamics Metric Browser, look for: Application Infrastructure Performa
 
 ##Custom Dashboard
 
-![](https://github.com/Appdynamics/linux-monitoring-extension/blob/master/LinuxCustom.png?raw=true)
+![](https://github.com/Appdynamics/linux-monitoring-extension/blob/master/Memory_Process.png?raw=true)
+![](https://github.com/Appdynamics/linux-monitoring-extension/blob/master/CPU.png?raw=true)
 
 ##Contributing
 
