@@ -88,7 +88,7 @@ public class LinuxMonitor extends AManagedMonitor {
             String key = entry.getKey();
             Object val = entry.getValue();
             if (val instanceof String) {
-                printMetric(hierarchy + "|" + key, (String) val,
+                printMetric(hierarchy + "|" + key, val,
                         MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
                         MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
                         MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE);
@@ -98,19 +98,37 @@ public class LinuxMonitor extends AManagedMonitor {
         }
     }
 
-    private void printMetric(String metricName, String metricValue, String aggregation, String timeRollup, String cluster)
+    private void printMetric(String metricName, Object metricValue, String aggregation, String timeRollup, String cluster)
     {
         MetricWriter metricWriter = getMetricWriter(metricName,
                 aggregation,
                 timeRollup,
                 cluster
         );
-        try {
-            Long.parseLong(metricValue);
-            metricWriter.printMetric(metricValue);
-        } catch (NumberFormatException e) {
-            Double val = Double.parseDouble(metricValue);
-            metricWriter.printMetric(String.valueOf(val.longValue()));
+        if(metricValue != null) {
+        	String valueString = toWholeNumberString(metricValue);
+        	metricWriter.printMetric(valueString);
+        	if (logger.isDebugEnabled()) {
+                logger.debug("metric = " + metricValue);
+            }
         }
+    }
+    
+    private String toWholeNumberString(Object attribute) {
+        if(attribute instanceof Double){
+            Double d = (Double) attribute;
+            if(d > 0 && d < 1.0d){
+                return "1";
+            }
+            return String.valueOf(Math.round(d));
+        }
+        else if(attribute instanceof Float){
+            Float f = (Float) attribute;
+            if(f > 0 && f < 1.0f){
+                return "1";
+            }
+            return String.valueOf(Math.round((Float) attribute));
+        }
+        return attribute.toString();
     }
 }
