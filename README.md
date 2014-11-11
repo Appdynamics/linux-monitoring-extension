@@ -19,38 +19,8 @@ The Linux monitoring extension gathers metrics for a Linux machine and sends the
  
 In the AppDynamics Metric Browser, look for: Application Infrastructure Performance  | \<Tier\> | Custom Metrics | Linux (or the custom path you specified).
 
-##Directory Structure
-
-<table><tbody>
-<tr>
-<th align="left"> File/Folder </th>
-<th align="left"> Description </th>
-</tr>
-<tr>
-<td class='confluenceTd'> conf </td>
-<td class='confluenceTd'> Contains the monitor.xml </td>
-</tr>
-<tr>
-<td class='confluenceTd'> lib </td>
-<td class='confluenceTd'> Contains third-party project references </td>
-</tr>
-<tr>
-<td class='confluenceTd'> src </td>
-<td class='confluenceTd'> Contains source code to the Linux Monitoring Extension </td>
-</tr>
-<tr>
-<td class='confluenceTd'> dist </td>
-<td class='confluenceTd'> Only obtained when using ant. Run 'ant build' to get binaries. Run 'ant package' to get the distributable .zip file </td>
-</tr>
-<tr>
-<td class='confluenceTd'> build.xml </td>
-<td class='confluenceTd'> Ant build script to package the project (required only if changing Java code) </td>
-</tr>
-</tbody>
-</table>	
 
 ## Metrics
-
 ### Metric Category: CPU
 
 |Metric Name            	|Description|
