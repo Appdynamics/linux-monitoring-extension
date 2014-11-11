@@ -41,6 +41,7 @@ public class LinuxMonitor extends AManagedMonitor {
 
     public TaskOutput execute(Map<String, String> args, TaskExecutionContext taskExecutionContext)
             throws TaskExecutionException {
+    	logger.info("Starting the Linux Monitoring task.");
         try {
             if (!args.get("metric-path").equals("")){
                 metricPath = args.get("metric-path");
@@ -82,61 +83,57 @@ public class LinuxMonitor extends AManagedMonitor {
             }
 
             printNestedMap(statsMap, metricPath);
-
+            logger.info("Linux Metric Upload Complete");
             return new TaskOutput("Linux Metric Upload Complete");
         } catch (Exception e) {
-            logger.error(e);
+            logger.error("Linux Metric Upload Failed", e);
             return new TaskOutput("Linux Metric Upload Failed");
         }
     }
 
-    private void printNestedMap(Map<String, Object> map, String hierarchy){
+    private void printNestedMap(Map<String, Object> map, String metricPath){
         for (Map.Entry<String, Object> entry : map.entrySet()){
             String key = entry.getKey();
             Object val = entry.getValue();
-            if (val instanceof String) {
-                printMetric(hierarchy + "|" + key, val,
-                        MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
-                        MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
-                        MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE);
-            } else if (val instanceof Map){
-                printNestedMap((Map) val, hierarchy + "|" + key);
+            if (val instanceof Map) {
+            	printNestedMap((Map) val, metricPath + "|" + key);
+            } else {
+            	printMetric(metricPath + "|" + key, val);
             }
         }
     }
 
-    private void printMetric(String metricName, Object metricValue, String aggregation, String timeRollup, String cluster)
+    private void printMetric(String metricName, Object metricValue)
     {
         MetricWriter metricWriter = getMetricWriter(metricName,
-                aggregation,
-                timeRollup,
-                cluster
+        		MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
+                MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
+                MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE
         );
-        if(metricValue != null) {
-        	String valueString = toWholeNumberString(metricValue);
+        String valueString = toWholeNumberString(metricValue);
+        if(valueString != null) {
         	metricWriter.printMetric(valueString);
         	if (logger.isDebugEnabled()) {
-                logger.debug("metric = " + metricValue);
+                logger.debug("metric = " + valueString);
             }
         }
     }
     
     private String toWholeNumberString(Object attribute) {
-        if(attribute instanceof Double){
-            Double d = (Double) attribute;
-            if(d > 0 && d < 1.0d){
-                return "1";
-            }
-            return String.valueOf(Math.round(d));
-        }
-        else if(attribute instanceof Float){
-            Float f = (Float) attribute;
-            if(f > 0 && f < 1.0f){
-                return "1";
-            }
-            return String.valueOf(Math.round((Float) attribute));
-        }
-        return attribute.toString();
+    	String attrString = (String) attribute;
+    	if(attribute != null && attrString.length() != 0) {
+    		try {
+    			Double d = Double.valueOf(attrString);
+                if(d > 0 && d < 1.0d){
+                	return "1";
+                } else {
+                	return String.valueOf(Math.round(d));
+                }
+			} catch (NumberFormatException e) {
+				logger.error(e);
+			}
+    	}
+		return null;
     }
     
     public static String getImplementationVersion() {
