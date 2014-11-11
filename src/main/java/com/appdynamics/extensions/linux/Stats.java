@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.appdynamics.monitors.linux;
+package com.appdynamics.extensions.linux;
 
 import org.apache.log4j.Logger;
 

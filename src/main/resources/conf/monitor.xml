@@ -22,8 +22,8 @@
                         <argument name="metric-path" is-required="false" default-value=""/>
                 </task-arguments>
                 <java-task>
-                        <classpath>LinuxMonitor.jar</classpath>
-                        <impl-class>com.appdynamics.monitors.linux.LinuxMonitor</impl-class>
+                        <classpath>linux-monitoring-extension.jar</classpath>
+                        <impl-class>com.appdynamics.extensions.linux.LinuxMonitor</impl-class>
                 </java-task>
         </monitor-run-task>
 </monitor>

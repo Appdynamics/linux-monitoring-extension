@@ -14,23 +14,30 @@
  * limitations under the License.
  */
 
-package com.appdynamics.monitors.linux;
+package com.appdynamics.extensions.linux;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.log4j.Logger;
 
 import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
 import com.singularity.ee.agent.systemagent.api.TaskOutput;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
-import org.apache.log4j.Logger;
-
-import java.util.HashMap;
-import java.util.Map;
 
 
 public class LinuxMonitor extends AManagedMonitor {
 
     private static String metricPath = "Custom Metrics|Linux";
-    private static Logger logger = Logger.getLogger(LinuxMonitor.class);
+    private static Logger logger = Logger.getLogger("com.singularity.extensions.LinuxMonitor");
+    
+    public LinuxMonitor() {
+    	String msg = "Using Monitor Version [" + getImplementationVersion() + "]";
+        logger.info(msg);
+        System.out.println(msg);
+	}
 
     public TaskOutput execute(Map<String, String> args, TaskExecutionContext taskExecutionContext)
             throws TaskExecutionException {
@@ -130,5 +137,9 @@ public class LinuxMonitor extends AManagedMonitor {
             return String.valueOf(Math.round((Float) attribute));
         }
         return attribute.toString();
+    }
+    
+    public static String getImplementationVersion() {
+        return LinuxMonitor.class.getPackage().getImplementationTitle();
     }
 }

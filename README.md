@@ -9,15 +9,13 @@ The Linux monitoring extension gathers metrics for a Linux machine and sends the
 
 ##Installation
 
-1. Run 'ant package' from the linux-monitoring-extension directory
-2. Download the file LinuxMonitor.zip located in the 'dist' directory into \<machineagent install dir\>/monitors/
-3. Unzip the downloaded file
-4. By default all the metrics will be shown under "Custom Metrics|Linux", To change this, open \<machineagent install dir\>/monitors/LinuxMonitor/, open monitor.xml and configure the metric-path parameter.
+1. Run 'mvn clean install' from the linux-monitoring-extension directory and find the LinuxMonitor.zip in the 'target' directory.
+2. Unzip LinuxMonitor.zip and copy the 'LinuxMonitor' directory to `<MACHINE_AGENT_HOME>/monitors/`
+3. By default all the metrics will be shown under "Custom Metrics|Linux", To change this, open `<MACHINE_AGENT_HOME>/monitors/LinuxMonitor/monitor.xml` and configure the metric-path parameter.
      <pre>
      &lt;argument name="metric-path" is-required="false" default-value="Custom Metrics|Ubuntu" /&gt;
-     
-</pre>
-5. Restart the Machine Agent. 
+     </pre>
+4. Restart the Machine Agent. 
  
 In the AppDynamics Metric Browser, look for: Application Infrastructure Performance  | \<Tier\> | Custom Metrics | Linux (or the custom path you specified).
 
@@ -170,6 +168,6 @@ Find out more in the [AppSphere] (http://appsphere.appdynamics.com/t5/eXchange/L
 
 ##Support
 
-For any questions or feature request, please contact [AppDynamics Center of Excellence](mailto:ace-request@appdynamics.com).
+For any questions or feature request, please contact [AppDynamics Support](mailto:help@appdynamics.com).
 
 
