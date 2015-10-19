@@ -1,29 +1,22 @@
 <monitor>
-        <name>LinuxMonitor</name>
-        <type>managed</type>
-        <description>Linux system monitor</description>
-        <monitor-configuration></monitor-configuration>
-        <monitor-run-task>
-                <execution-style>periodic</execution-style>
-                <execution-frequency-in-seconds>60</execution-frequency-in-seconds>
-                <name>Linux Monitor Run Task</name>
-                <display-name>Linux Monitor Task</display-name>
-                <description>Linux Monitor Task</description>
-                <type>java</type>
-                <execution-timeout-in-secs>60</execution-timeout-in-secs>
-                <task-arguments>                        
-                        <!-- CONFIGURE METRIC PATH (OPTIONAL):
-                            You can configure a metric path, such that only one tier is going to receive
-                            metrics from this monitor. The pattern is: Server|Component:<id or name>
-                            Component id or name is the id or name of the tier.
-                            Default (if default-value="") is "Custom Metrics|Linux" under 
-                            Application Infrastructure Performance in every tier
-                        -->
-                        <argument name="metric-path" is-required="false" default-value=""/>
-                </task-arguments>
-                <java-task>
-                        <classpath>linux-monitoring-extension.jar</classpath>
-                        <impl-class>com.appdynamics.extensions.linux.LinuxMonitor</impl-class>
-                </java-task>
-        </monitor-run-task>
+    <name>LinuxMonitor</name>
+    <type>managed</type>
+    <description>Linux system monitor</description>
+    <monitor-configuration></monitor-configuration>
+    <monitor-run-task>
+        <execution-style>periodic</execution-style>
+        <execution-frequency-in-seconds>60</execution-frequency-in-seconds>
+        <name>Linux Monitor Run Task</name>
+        <display-name>Linux Monitor Task</display-name>
+        <description>Linux Monitor Task</description>
+        <type>java</type>
+        <execution-timeout-in-secs>60</execution-timeout-in-secs>
+        <task-arguments>
+            <argument name="config-file" is-required="true" default-value="monitors/LinuxMonitor/config.yml"/>
+        </task-arguments>
+        <java-task>
+            <classpath>linux-monitoring-extension.jar</classpath>
+            <impl-class>com.appdynamics.extensions.linux.LinuxMonitor</impl-class>
+        </java-task>
+    </monitor-run-task>
 </monitor>

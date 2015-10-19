@@ -1,0 +1,5 @@
+
+mountedNFS:
+      - fileSystem: "/dev/sdb1"
+        displayName: "usb"
+metricPrefix: "Custom Metrics|Linux|"

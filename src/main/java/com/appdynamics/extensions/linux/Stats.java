@@ -16,16 +16,23 @@
 
 package com.appdynamics.extensions.linux;
 
+import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
 
 public class Stats {
-    private Logger logger;
-
+    public static final String IDENTIFIER = "_ID_";
     private static final String STAT_PATH = "/proc/stat";
     private static final String NET_STAT_PATH = "/proc/net/dev";
     private static final String DISK_STAT_PATH = "/proc/diskstats";
@@ -38,12 +45,8 @@ public class Stats {
     private static final String SOCK_STAT_PATH = "/proc/net/sockstat";
 
     private static final String DISK_USAGE_CMD = "df -kP 2>/dev/null";
-
-    public static final String IDENTIFIER = "_ID_";
-
     private static final String SPACE_REGEX = "[\t ]+";
     private static final String SPACE_COLON_REGEX = "[\t :]+";
-
     private static String[] CPU_STATS =
             {IDENTIFIER, "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal", "guest", "guest_nice"};
     private static String[] PAGE_STATS = {"page", "page in", "page out"};
@@ -80,7 +83,7 @@ public class Stats {
     private static String[] UDP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "udp"};
     private static String[] RAW_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "raw"};
     private static String[] IPFRAG_STATS = {IDENTIFIER, IDENTIFIER, "ipfrag"};
-
+    private Logger logger;
 
 
     public Stats(Logger logger) {
@@ -99,7 +102,7 @@ public class Stats {
         return reader;
     }
 
-    public Map<String, Object> getCPUStats(){
+    public Map<String, Object> getCPUStats() {
         BufferedReader reader = getStream(STAT_PATH);
         FileParser parser = new FileParser(reader, "CPU", logger);
         FileParser.StatParser statParser = new FileParser.StatParser(CPU_STATS, SPACE_REGEX) {
@@ -118,7 +121,7 @@ public class Stats {
         return parser.getStats();
     }
 
-    public Map<String, Object> getDiskStats(){
+    public Map<String, Object> getDiskStats() {
         BufferedReader reader = getStream(DISK_STAT_PATH);
         FileParser parser = new FileParser(reader, "disk", logger);
         FileParser.StatParser statParser = new FileParser.StatParser(DISK_STATS, SPACE_REGEX) {
@@ -137,7 +140,7 @@ public class Stats {
         return parser.getStats();
     }
 
-    public Map<String, Object> getNetStats(){
+    public Map<String, Object> getNetStats() {
         BufferedReader reader = getStream(NET_STAT_PATH);
         FileParser parser = new FileParser(reader, "net", logger);
         FileParser.StatParser statParser = new FileParser.StatParser(NET_STATS, SPACE_COLON_REGEX) {
@@ -156,17 +159,17 @@ public class Stats {
         return parser.getStats();
     }
 
-    public Map<String, Object> getDiskUsage(){
+    public Map<String, Object> getDiskUsage() {
         BufferedReader reader;
         try {
             Process process = Runtime.getRuntime().exec(DISK_USAGE_CMD);
             process.waitFor();
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         } catch (IOException e) {
-            logger.error("Failed to run '"+DISK_USAGE_CMD+"' for disk usage");
+            logger.error("Failed to run '" + DISK_USAGE_CMD + "' for disk usage");
             return null;
         } catch (InterruptedException e) {
-            logger.error("Failed to run '"+DISK_USAGE_CMD+"' for disk usage");
+            logger.error("Failed to run '" + DISK_USAGE_CMD + "' for disk usage");
             return null;
         }
 
@@ -187,7 +190,7 @@ public class Stats {
         return parser.getStats();
     }
 
-    public Map<String, Object> getFileStats(){
+    public Map<String, Object> getFileStats() {
         BufferedReader fhReader = getStream(FILE_NR_STAT_PATH);
         BufferedReader inodeReader = getStream(INODE_NR_STAT_PATH);
         BufferedReader dentriesReader = getStream(DENTRIES_STAT_PATH);
@@ -208,7 +211,7 @@ public class Stats {
         };
         parser.addParser(statParser);
         Map<String, Object> map = parser.getStats();
-        if (map != null){
+        if (map != null) {
             statsMap.putAll(map);
         }
 
@@ -226,7 +229,7 @@ public class Stats {
         };
         parser.addParser(statParser);
         map = parser.getStats();
-        if (map != null){
+        if (map != null) {
             statsMap.putAll(map);
         }
 
@@ -244,14 +247,14 @@ public class Stats {
         };
         parser.addParser(statParser);
         map = parser.getStats();
-        if (map != null){
+        if (map != null) {
             statsMap.putAll(map);
         }
 
         return statsMap;
     }
 
-    public Map<String, Object> getLoadStats(){
+    public Map<String, Object> getLoadStats() {
         BufferedReader reader = getStream(LOADAVG_STAT_PATH);
         FileParser parser = new FileParser(reader, "load average", logger);
         FileParser.StatParser statParser = new FileParser.StatParser(LOADAVG_STATS, SPACE_REGEX) {
@@ -270,7 +273,7 @@ public class Stats {
         return parser.getStats();
     }
 
-    public Map<String, Object> getMemStats(){
+    public Map<String, Object> getMemStats() {
         BufferedReader reader = getStream(MEM_STAT_PATH);
 
         Map<String, Object> statsMap = getRowStats(reader, SPACE_COLON_REGEX,
@@ -287,7 +290,7 @@ public class Stats {
                     + Long.parseLong((String) statsMap.get("cached"));
             Long realFreeP = 100 * realFree / total;
             Long swapUsedP = 0L;
-            if (swapTotal != 0){
+            if (swapTotal != 0) {
                 swapUsedP = 100 * swapUsed / swapTotal;
             }
 
@@ -307,7 +310,7 @@ public class Stats {
 
     }
 
-    public Map<String, Object> getPageSwapStats(){
+    public Map<String, Object> getPageSwapStats() {
         BufferedReader reader = getStream(STAT_PATH);
         Map<String, Object> statsMap;
 
@@ -338,14 +341,14 @@ public class Stats {
         parser.addParser(swapParser);
 
         statsMap = parser.getStats();
-        if (statsMap == null){  //page and swap are not in /proc/stat
+        if (statsMap == null) {  //page and swap are not in /proc/stat
             reader = getStream(VM_STAT_PATH);
             statsMap = getRowStats(reader, SPACE_REGEX, PAGE_SWAP_FILE_STATS, PAGE_SWAP_STATS, "page and swap", 0, 1);
         }
         return statsMap;
     }
 
-    public Map<String, Object> getProcStats(){
+    public Map<String, Object> getProcStats() {
         BufferedReader reader = getStream(STAT_PATH);
         Map<String, Object> statsMap = getRowStats(reader, SPACE_REGEX, PROC_FILE_STATS, PROC_STATS, "process", 0, 1);
 
@@ -365,14 +368,14 @@ public class Stats {
         };
         parser.addParser(statParser);
         Map<String, Object> map = parser.getStats();
-        if (map != null){
+        if (map != null) {
             statsMap.putAll(map);
         }
 
         return statsMap;
     }
 
-    public Map<String, Object> getSockStats(){
+    public Map<String, Object> getSockStats() {
         BufferedReader reader = getStream(SOCK_STAT_PATH);
         FileParser parser = new FileParser(reader, "socket", logger);
         FileParser.StatParser sockParser = new FileParser.StatParser(SOCK_USED_STATS, SPACE_REGEX) {
@@ -441,8 +444,8 @@ public class Stats {
 
 
     private Map<String, Object> getRowStats(BufferedReader reader, String splitRegex,
-                                           String[] fileKey, String[] statsKey,
-                                           String description, int keyIndex, int valIndex){
+                                            String[] fileKey, String[] statsKey,
+                                            String description, int keyIndex, int valIndex) {
         Map<String, Object> statsMap = null;
         if (reader == null) {
             logger.error("Failed to read " + description + " stats");
@@ -450,8 +453,8 @@ public class Stats {
             statsMap = new HashMap<String, Object>();
 
             Map<String, String> keyMap = new HashMap<String, String>();
-            for (int i = 0; i<fileKey.length && i<statsKey.length; i++){
-                keyMap.put(fileKey[i],statsKey[i]);
+            for (int i = 0; i < fileKey.length && i < statsKey.length; i++) {
+                keyMap.put(fileKey[i], statsKey[i]);
             }
 
             try {
@@ -461,7 +464,7 @@ public class Stats {
                         line = line.trim();
                         String[] stats = line.split(splitRegex);
                         String name = keyMap.get(stats[keyIndex]);
-                        if (name != null){
+                        if (name != null) {
                             statsMap.put(name, stats[valIndex]);
                         }
                     }
@@ -474,5 +477,21 @@ public class Stats {
         }
 
         return statsMap;
+    }
+
+    public Map<String, Object> getMountStatus(MountedNFS[] mountedNFS) {
+        Map<String, Object> mountStatsMap = Maps.newHashMap();
+        NFSMountStatusProcessor statusProcessor = new NFSMountStatusProcessor();
+        for (MountedNFS fileSystem : mountedNFS) {
+            String status = statusProcessor.execute(fileSystem.getFileSystem());
+            if (!Strings.isNullOrEmpty(status)) {
+                if (!Strings.isNullOrEmpty(fileSystem.getDisplayName())) {
+                    mountStatsMap.put(fileSystem.getDisplayName(), status);
+                } else {
+                    mountStatsMap.put(fileSystem.getFileSystem(), status);
+                }
+            }
+        }
+        return mountStatsMap;
     }
 }

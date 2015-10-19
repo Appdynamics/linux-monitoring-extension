@@ -39,11 +39,11 @@ public class FileParser {
         this.logger = logger;
     }
 
-    public void addParser(StatParser parser){
+    public void addParser(StatParser parser) {
         parserList.add(parser);
     }
 
-    public Map<String, Object> getStats(){
+    public Map<String, Object> getStats() {
         Map<String, Object> statsMap = null;
         if (reader == null) {
             logError();
@@ -56,16 +56,16 @@ public class FileParser {
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
                         for (StatParser parser : parserList) {
-                            if (parser.isMatchType(line)){
+                            if (parser.isMatchType(line)) {
                                 String[] stats = line.split(parser.regex);
                                 Map<String, String> map = getStatMap(parser.keys, stats);
                                 String name = map.remove(Stats.IDENTIFIER);
                                 if (parser.isBase(stats)) {
                                     statsMap.putAll(map);   //put in base dir
-                                } else if (name != null){
-                                    statsMap.put(name,map); //put in subdir
+                                } else if (name != null) {
+                                    statsMap.put(name, map); //put in subdir
                                 } else {    //no sub dir name from stats, fall back to description
-                                    statsMap.put(description,map);
+                                    statsMap.put(description, map);
                                 }
                             }
                         }
@@ -76,7 +76,7 @@ public class FileParser {
             } catch (IOException e) {
                 logError();
             }
-            if (statsMap.size() == 0){
+            if (statsMap.size() == 0) {
                 statsMap = null;
             }
         }
@@ -86,13 +86,13 @@ public class FileParser {
 
     private Map<String, String> getStatMap(String[] keys, String[] vals) {
         Map<String, String> map = new HashMap<String, String>();
-        for (int i=0; i<vals.length && i<keys.length; i++){
-            map.put(keys[i],vals[i]);
+        for (int i = 0; i < vals.length && i < keys.length; i++) {
+            map.put(keys[i], vals[i]);
         }
         return map;
     }
 
-    public void logError(){
+    public void logError() {
         logger.error("Failed to read " + description + " stats");
     }
 
@@ -100,20 +100,22 @@ public class FileParser {
         private String[] keys;
         private String regex;
 
-        public StatParser(String[] keys, String regex){
+        public StatParser(String[] keys, String regex) {
             this.keys = keys;
             this.regex = regex;
         }
 
         /**
          * Condition for parser to parse current line
-         * @param line  a line from <code>reader</code>
+         *
+         * @param line a line from <code>reader</code>
          * @return true if parser should parse <code>line</code>, false otherwise
          */
         abstract boolean isMatchType(String line);
 
         /**
          * Whether current list of stats should be placed under base dir
+         *
          * @param stats array of stats from a line in <code>reader</code>
          * @return true if the stats should be placed under base dir, false if they're to be put in a sub dir
          */

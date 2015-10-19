@@ -16,127 +16,202 @@
 
 package com.appdynamics.extensions.linux;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.apache.log4j.Logger;
-
+import com.appdynamics.extensions.PathResolver;
+import com.appdynamics.extensions.linux.config.Configuration;
+import com.appdynamics.extensions.yml.YmlReader;
+import com.google.common.base.Strings;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
 import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
 import com.singularity.ee.agent.systemagent.api.TaskOutput;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
+import org.apache.log4j.Logger;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class LinuxMonitor extends AManagedMonitor {
 
-    private static String metricPath = "Custom Metrics|Linux";
-    private static Logger logger = Logger.getLogger("com.singularity.extensions.LinuxMonitor");
-    
+    private static Logger logger = Logger.getLogger(LinuxMonitor.class);
+    private Cache<String, Long> prevMetricsMap;
+
     public LinuxMonitor() {
-    	String msg = "Using Monitor Version [" + getImplementationVersion() + "]";
+        String msg = "Using Monitor Version [" + getImplementationVersion() + "]";
         logger.info(msg);
         System.out.println(msg);
-	}
 
-    public TaskOutput execute(Map<String, String> args, TaskExecutionContext taskExecutionContext)
-            throws TaskExecutionException {
-    	logger.info("Starting the Linux Monitoring task.");
-        try {
-            if (!args.get("metric-path").equals("")){
-                metricPath = args.get("metric-path");
-            }
-
-            Stats stats = new Stats(logger);
-            Map<String, Object> statsMap = new HashMap<String, Object>();
-            Map<String, Object> map;
-
-            if ((map = stats.getCPUStats()) != null){
-                statsMap.put("CPU",map);
-            }
-            if ((map = stats.getDiskStats()) != null){
-                statsMap.put("disk",map);
-            }
-            if ((map = stats.getDiskUsage()) != null){
-                statsMap.put("disk usage",map);
-            }
-            if ((map = stats.getFileStats()) != null){
-                statsMap.put("file",map);
-            }
-            if ((map = stats.getLoadStats()) != null){
-                statsMap.put("load average",map);
-            }
-            if ((map = stats.getMemStats()) != null){
-                statsMap.put("memory",map);
-            }
-            if ((map = stats.getNetStats()) != null){
-                statsMap.put("network",map);
-            }
-            if ((map = stats.getPageSwapStats()) != null){
-                statsMap.put("page",map);
-            }
-            if ((map = stats.getProcStats()) != null){
-                statsMap.put("process",map);
-            }
-            if ((map = stats.getSockStats()) != null){
-                statsMap.put("socket",map);
-            }
-
-            printNestedMap(statsMap, metricPath);
-            logger.info("Linux Metric Upload Complete");
-            return new TaskOutput("Linux Metric Upload Complete");
-        } catch (Exception e) {
-            logger.error("Linux Metric Upload Failed", e);
-            return new TaskOutput("Linux Metric Upload Failed");
-        }
+        prevMetricsMap = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
     }
 
-    private void printNestedMap(Map<String, Object> map, String metricPath){
-        for (Map.Entry<String, Object> entry : map.entrySet()){
+    public static String getImplementationVersion() {
+        return LinuxMonitor.class.getPackage().getImplementationTitle();
+    }
+
+    public TaskOutput execute(Map<String, String> taskArgs, TaskExecutionContext taskExecutionContext)
+            throws TaskExecutionException {
+        if (taskArgs != null) {
+            logger.info("Starting " + getImplementationVersion() + " Monitoring Task");
+            try {
+                String configFilename = getConfigFilename(taskArgs.get("config-file"));
+                Configuration config = YmlReader.readFromFile(configFilename, Configuration.class);
+
+                Map<String, Object> statsMap = populateMetrics(config);
+                printNestedMap(statsMap, config.getMetricPrefix());
+
+                logger.info("Linux Monitoring Task completed successfully");
+                return new TaskOutput("Linux Monitoring Task completed successfully");
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("Linux Metric Upload Failed ", e);
+            }
+        }
+        throw new TaskExecutionException("Linux Monitor completed with failures");
+    }
+
+    private Map<String, Object> populateMetrics(Configuration config) {
+        Stats stats = new Stats(logger);
+        Map<String, Object> statsMap = new HashMap<String, Object>();
+        Map<String, Object> map;
+
+        if ((map = stats.getDiskStats()) != null) {
+            statsMap.put("disk", map);
+        }
+
+        if ((map = stats.getCPUStats()) != null) {
+            statsMap.put("CPU", map);
+        }
+
+        if ((map = stats.getDiskUsage()) != null) {
+            statsMap.put("disk usage", map);
+        }
+        if ((map = stats.getFileStats()) != null) {
+            statsMap.put("file", map);
+        }
+        if ((map = stats.getLoadStats()) != null) {
+            statsMap.put("load average", map);
+        }
+        if ((map = stats.getMemStats()) != null) {
+            statsMap.put("memory", map);
+        }
+        if ((map = stats.getNetStats()) != null) {
+            statsMap.put("network", map);
+        }
+        if ((map = stats.getPageSwapStats()) != null) {
+            statsMap.put("page", map);
+        }
+        if ((map = stats.getProcStats()) != null) {
+            statsMap.put("process", map);
+        }
+        if ((map = stats.getSockStats()) != null) {
+            statsMap.put("socket", map);
+        }
+        if ((map = stats.getMountStatus(config.getMountedNFS())) != null) {
+            statsMap.put("nfsMountStatus", map);
+        }
+        return statsMap;
+    }
+
+    private void printNestedMap(Map<String, Object> map, String metricPath) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
             String key = entry.getKey();
             Object val = entry.getValue();
             if (val instanceof Map) {
-            	printNestedMap((Map) val, metricPath + "|" + key);
+                printNestedMap((Map) val, metricPath + key + "|");
             } else {
-            	printMetric(metricPath + "|" + key, val);
+                // compute Avg IO utilization using metric in diskstats
+                if ("time spent doing I/Os (ms)".equals(key)) {
+                    Long[] prevValues = processDelta(metricPath, val);
+                    if (prevValues[0] != null) {
+                        printMetric(metricPath + "Avg I/O Utilization %", getDeltaValue(val, prevValues));
+                    }
+                }
+                printMetric(metricPath + key, val);
             }
         }
     }
 
-    private void printMetric(String metricName, Object metricValue)
-    {
-        MetricWriter metricWriter = getMetricWriter(metricName,
-        		MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
-                MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
-                MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE
-        );
-        String valueString = toWholeNumberString(metricValue);
-        if(valueString != null) {
-        	metricWriter.printMetric(valueString);
-        	if (logger.isDebugEnabled()) {
-                logger.debug("metric = " + valueString);
+    private Long[] processDelta(String metricName, Object timeSpentDoingIOInms) {
+        String timeElapsed = "timeElapsed";
+        Long prevMetricValue = prevMetricsMap.getIfPresent(metricName);
+        Long prevTimeElapsed = prevMetricsMap.getIfPresent(metricName + timeElapsed);
+        Long[] prevValues = {prevMetricValue, prevTimeElapsed};
+        if (timeSpentDoingIOInms != null) {
+            prevMetricsMap.put(metricName, Long.valueOf((String) timeSpentDoingIOInms));
+            prevMetricsMap.put(metricName + timeElapsed, System.currentTimeMillis());
+        }
+        return prevValues;
+    }
+
+    private Double getDeltaValue(Object currentValue, Long[] prevValues) {
+        if (currentValue == null) {
+            return null;
+        }
+        long currentTime = System.currentTimeMillis();
+        long prevTime = prevValues[1];
+        Long deltaIOTimeSpent = Long.valueOf((String) currentValue) - prevValues[0];
+        Long duration = currentTime - prevTime;
+
+        Double avgIOUtilizationInPercent = (double) deltaIOTimeSpent / (double) duration * 100.0;
+        return avgIOUtilizationInPercent;
+    }
+
+    private void printMetric(String metricName, Object metricValue) {
+        if (metricValue != null) {
+            MetricWriter metricWriter = getMetricWriter(metricName,
+                    MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
+                    MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
+                    MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE
+            );
+            try {
+                String valueString = toWholeNumberString(metricValue);
+                if (valueString != null) {
+                    metricWriter.printMetric(valueString);
+                }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("metric = " + valueString);
+                }
+            } catch (Exception e) {
+                logger.error("Error while reporting metric " + metricName + " " + metricValue, e);
             }
         }
     }
-    
+
     private String toWholeNumberString(Object attribute) {
-    	String attrString = (String) attribute;
-    	if(attribute != null && attrString.length() != 0) {
-    		try {
-    			Double d = Double.valueOf(attrString);
-                if(d > 0 && d < 1.0d){
-                	return "1";
-                } else {
-                	return String.valueOf(Math.round(d));
-                }
-			} catch (NumberFormatException e) {
-				logger.error(e);
-			}
-    	}
-		return null;
+        if (attribute instanceof String) {
+            String attrString = (String) attribute;
+            Double d = Double.valueOf(attrString);
+            return d > 0 && d < 1.0d ? "1" : String.valueOf(Math.round(d));
+        } else if (attribute instanceof Long) {
+            return String.valueOf(attribute);
+        } else if (attribute instanceof Double) {
+            Double f1 = (Double) attribute;
+            return f1.doubleValue() > 0.0D && f1.doubleValue() < 1.0D ? "1" : String.valueOf(Math.round(f1.doubleValue()));
+        } else if (attribute instanceof Float) {
+            Float f = (Float) attribute;
+            return f.floatValue() > 0.0F && f.floatValue() < 1.0F ? "1" : String.valueOf(Math.round(((Float) attribute).floatValue()));
+        }
+        return null;
     }
-    
-    public static String getImplementationVersion() {
-        return LinuxMonitor.class.getPackage().getImplementationTitle();
+
+    private String getConfigFilename(String filename) {
+        if (filename == null) {
+            return "";
+        }
+        // for absolute paths
+        if (new File(filename).exists()) {
+            return filename;
+        }
+        // for relative paths
+        File jarPath = PathResolver.resolveDirectory(AManagedMonitor.class);
+        String configFileName = "";
+        if (!Strings.isNullOrEmpty(filename)) {
+            configFileName = jarPath + File.separator + filename;
+        }
+        return configFileName;
     }
 }

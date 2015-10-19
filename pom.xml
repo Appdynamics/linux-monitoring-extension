@@ -1,42 +1,47 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.appdynamics.extensions</groupId>
-  <artifactId>linux-monitoring-extension</artifactId>
-  <version>1.1</version>
-  <packaging>jar</packaging>
+    <groupId>com.appdynamics.extensions</groupId>
+    <artifactId>linux-monitoring-extension</artifactId>
+    <version>1.1</version>
+    <packaging>jar</packaging>
 
-  <name>linux-monitoring-extension</name>
-  <url>http://maven.apache.org</url>
+    <name>linux-monitoring-extension</name>
+    <url>http://maven.apache.org</url>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
-    <target.dir>${project.build.directory}/LinuxMonitor</target.dir>
-  </properties>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
+        <target.dir>${project.build.directory}/LinuxMonitor</target.dir>
+    </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>com.appdynamics</groupId>
-      <artifactId>machine-agent</artifactId>
-      <version>3.7.11</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-  <build>
+    <dependencies>
+        <dependency>
+            <groupId>com.appdynamics</groupId>
+            <artifactId>machine-agent</artifactId>
+            <version>3.7.11</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.appdynamics</groupId>
+            <artifactId>appd-exts-commons</artifactId>
+            <version>1.2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.4</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
         <finalName>${project.artifactId}</finalName>
         <resources>
             <resource>
@@ -83,10 +88,13 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Implementation-Title>Linux Monitor v${project.version} Build Date ${maven.build.timestamp}</Implementation-Title>
+                                        <Implementation-Title>Linux Monitor v${project.version} Build Date ${maven.build.timestamp}
+                                        </Implementation-Title>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>
@@ -107,9 +115,11 @@
                                 <mkdir dir="${target.dir}"/>
                                 <copy todir="${target.dir}">
                                     <fileset dir="src/main/resources/conf" includes="monitor.xml"/>
+                                    <fileset dir="src/main/resources/conf" includes="config.yml"/>
                                 </copy>
                                 <copy todir="${target.dir}">
-                                    <fileset dir="${project.build.directory}" includes="${project.artifactId}.${project.packaging}"/>
+                                    <fileset dir="${project.build.directory}"
+                                             includes="${project.artifactId}.${project.packaging}"/>
                                 </copy>
                                 <zip destfile="${target.dir}-${project.version}.zip">
                                     <zipfileset dir="${target.dir}" filemode="755" prefix="LinuxMonitor/"/>
