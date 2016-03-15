@@ -66,7 +66,7 @@ public class Stats {
     private static String[] FILE_NR_STATS = {"fhalloc", "fhfree", "fhmax"};
     private static String[] INODE_NR_STATS = {"inalloc", "infree"};
     private static String[] DENTRIES_STATS = {"dentries", "unused", "agelimit", "wantpages"};
-    private static String[] LOADAVG_STATS = {"load avg (1 min)", "load avg (10 min)", "load avg (15 min)"};
+    private static String[] LOADAVG_STATS = {"load avg (1 min)", "load avg (5 min)", "load avg (15 min)"};
     private static String[] MEM_FILE_STATS =
             {"MemTotal", "MemFree", "Buffers", "Cached", "SwapCached", "Active", "Inactive", "SwapTotal", "SwapFree",
                     "Dirty", "Writeback", "Mapped", "Slab", "CommitLimit", "Committed_AS"};

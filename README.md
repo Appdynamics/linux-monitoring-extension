@@ -71,7 +71,7 @@ Note : Please make sure not to use tab (\t) while editing yaml files. You can va
 |Metric Name            	|Description|
 |------------------------------	|------------|
 |load avg (1 min) 				|Load average 1 Minute
-|load avg (10 min) 				|Load average 10 Minute
+|load avg (5 min) 				|Load average 5 Minute
 |load avg (15 min) 				|Load average 15 Minute
 
 ### Metric Category: memory
