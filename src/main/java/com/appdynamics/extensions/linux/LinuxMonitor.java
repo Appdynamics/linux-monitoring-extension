@@ -18,6 +18,7 @@ package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.PathResolver;
 import com.appdynamics.extensions.linux.config.Configuration;
+import com.appdynamics.extensions.linux.config.MountedNFS;
 import com.appdynamics.extensions.yml.YmlReader;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
@@ -110,8 +111,11 @@ public class LinuxMonitor extends AManagedMonitor {
         if ((map = stats.getSockStats()) != null) {
             statsMap.put("socket", map);
         }
-        if ((map = stats.getMountStatus(config.getMountedNFS())) != null) {
-            statsMap.put("nfsMountStatus", map);
+        MountedNFS[] mountedNFS = config.getMountedNFS();
+        if(mountedNFS != null) { //Null check to MountedNFS
+            if ((map = stats.getMountStatus(mountedNFS)) != null) {
+                statsMap.put("nfsMountStatus", map);
+            }
         }
         return statsMap;
     }
