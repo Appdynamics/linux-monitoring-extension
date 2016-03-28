@@ -6,4 +6,9 @@ mountedNFS:
         displayName: "NFS1"
 
 
+#This will create this metric in all the tiers, under this path
 metricPrefix: "Custom Metrics|Linux|"
+
+#This will create it in specific Tier. Replace <ComponentID>
+#(https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java)
+#metricPrefix: Server|Component:<ComponentID>|Custom Metrics|Linux

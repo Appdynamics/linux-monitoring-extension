@@ -42,21 +42,14 @@ public class LinuxMonitor extends AManagedMonitor {
     private Cache<String, Long> prevMetricsMap;
 
     public LinuxMonitor() {
-        String msg = "Using Monitor Version [" + getImplementationVersion() + "]";
-        logger.info(msg);
-        System.out.println(msg);
-
+        System.out.println(logVersion());
         prevMetricsMap = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
-    }
-
-    public static String getImplementationVersion() {
-        return LinuxMonitor.class.getPackage().getImplementationTitle();
     }
 
     public TaskOutput execute(Map<String, String> taskArgs, TaskExecutionContext taskExecutionContext)
             throws TaskExecutionException {
         if (taskArgs != null) {
-            logger.info("Starting " + getImplementationVersion() + " Monitoring Task");
+            logger.info(logVersion());
             try {
                 String configFilename = getConfigFilename(taskArgs.get("config-file"));
                 Configuration config = YmlReader.readFromFile(configFilename, Configuration.class);
@@ -67,7 +60,6 @@ public class LinuxMonitor extends AManagedMonitor {
                 logger.info("Linux Monitoring Task completed successfully");
                 return new TaskOutput("Linux Monitoring Task completed successfully");
             } catch (Exception e) {
-                e.printStackTrace();
                 logger.error("Linux Metric Upload Failed ", e);
             }
         }
@@ -217,5 +209,14 @@ public class LinuxMonitor extends AManagedMonitor {
             configFileName = jarPath + File.separator + filename;
         }
         return configFileName;
+    }
+
+    private String logVersion() {
+        String msg = "Using Monitor Version [" + getImplementationVersion() + "]";
+        return msg;
+    }
+
+    public static String getImplementationVersion() {
+        return LinuxMonitor.class.getPackage().getImplementationTitle();
     }
 }
