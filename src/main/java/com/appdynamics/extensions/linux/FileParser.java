@@ -29,14 +29,16 @@ import java.util.Map;
 public class FileParser {
     private BufferedReader reader;
     private String description;
+    private String countMetric;
     private List<StatParser> parserList = new ArrayList<StatParser>();
 
     private Logger logger;
 
-    public FileParser(BufferedReader reader, String description, Logger logger) {
+    public FileParser(BufferedReader reader, String description, Logger logger, String countMetric) {
         this.reader = reader;
         this.description = description;
         this.logger = logger;
+        this.countMetric = countMetric;
     }
 
     public void addParser(StatParser parser) {
@@ -45,6 +47,7 @@ public class FileParser {
 
     public Map<String, Object> getStats() {
         Map<String, Object> statsMap = null;
+        int count = 0;
         if (reader == null) {
             logError();
         } else {
@@ -63,12 +66,18 @@ public class FileParser {
                                 if (parser.isBase(stats)) {
                                     statsMap.putAll(map);   //put in base dir
                                 } else if (name != null) {
+                                    if(parser.isCountRequired()) {
+                                        count++;
+                                    }
                                     statsMap.put(name, map); //put in subdir
                                 } else {    //no sub dir name from stats, fall back to description
                                     statsMap.put(description, map);
                                 }
                             }
                         }
+                    }
+                    if(countMetric != null) {
+                        statsMap.put(countMetric, Long.valueOf(count));
                     }
                 } finally {
                     reader.close();
@@ -120,5 +129,12 @@ public class FileParser {
          * @return true if the stats should be placed under base dir, false if they're to be put in a sub dir
          */
         abstract boolean isBase(String[] stats);
+
+        /**
+         * Condition to check if any of the metric in reader needs an increment to have a count metric
+         * @return
+         */
+        abstract boolean isCountRequired();
+
     }
 }

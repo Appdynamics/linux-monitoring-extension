@@ -42,6 +42,7 @@ public class Stats {
     private static final String DISK_USAGE_CMD = "df -kP 2>/dev/null";
     private static final String SPACE_REGEX = "[\t ]+";
     private static final String SPACE_COLON_REGEX = "[\t :]+";
+
     private static String[] CPU_STATS =
             {IDENTIFIER, "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal", "guest", "guest_nice"};
     private static String[] PAGE_STATS = {"page", "page in", "page out"};
@@ -99,7 +100,7 @@ public class Stats {
 
     public Map<String, Object> getCPUStats() {
         BufferedReader reader = getStream(STAT_PATH);
-        FileParser parser = new FileParser(reader, "CPU", logger);
+        FileParser parser = new FileParser(reader, "CPU", logger, "CPU cores (logical)");
         FileParser.StatParser statParser = new FileParser.StatParser(CPU_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -110,6 +111,11 @@ public class Stats {
             boolean isBase(String[] stats) {
                 return stats[0].equals("cpu");
             }
+
+            @Override
+            boolean isCountRequired() {
+                return true;
+            }
         };
         parser.addParser(statParser);
 
@@ -118,7 +124,7 @@ public class Stats {
 
     public Map<String, Object> getDiskStats() {
         BufferedReader reader = getStream(DISK_STAT_PATH);
-        FileParser parser = new FileParser(reader, "disk", logger);
+        FileParser parser = new FileParser(reader, "disk", logger, null);
         FileParser.StatParser statParser = new FileParser.StatParser(DISK_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -129,6 +135,11 @@ public class Stats {
             boolean isBase(String[] stats) {
                 return false;
             }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
+            }
         };
         parser.addParser(statParser);
 
@@ -137,7 +148,7 @@ public class Stats {
 
     public Map<String, Object> getNetStats() {
         BufferedReader reader = getStream(NET_STAT_PATH);
-        FileParser parser = new FileParser(reader, "net", logger);
+        FileParser parser = new FileParser(reader, "net", logger, null);
         FileParser.StatParser statParser = new FileParser.StatParser(NET_STATS, SPACE_COLON_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -146,6 +157,11 @@ public class Stats {
 
             @Override
             boolean isBase(String[] stats) {
+                return false;
+            }
+
+            @Override
+            boolean isCountRequired() {
                 return false;
             }
         };
@@ -168,7 +184,7 @@ public class Stats {
             return null;
         }
 
-        FileParser parser = new FileParser(reader, "disk usage", logger);
+        FileParser parser = new FileParser(reader, "disk usage", logger, null);
         FileParser.StatParser statParser = new FileParser.StatParser(DISK_USAGE_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -177,6 +193,11 @@ public class Stats {
 
             @Override
             boolean isBase(String[] stats) {
+                return false;
+            }
+
+            @Override
+            boolean isCountRequired() {
                 return false;
             }
         };
@@ -192,7 +213,7 @@ public class Stats {
 
         Map<String, Object> statsMap = new HashMap<String, Object>();
 
-        FileParser parser = new FileParser(fhReader, "file handler", logger);
+        FileParser parser = new FileParser(fhReader, "file handler", logger, null);
         FileParser.StatParser statParser = new FileParser.StatParser(FILE_NR_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -203,6 +224,11 @@ public class Stats {
             boolean isBase(String[] stats) {
                 return true;
             }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
+            }
         };
         parser.addParser(statParser);
         Map<String, Object> map = parser.getStats();
@@ -210,7 +236,7 @@ public class Stats {
             statsMap.putAll(map);
         }
 
-        parser = new FileParser(inodeReader, "inode", logger);
+        parser = new FileParser(inodeReader, "inode", logger, null);
         statParser = new FileParser.StatParser(INODE_NR_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -221,6 +247,11 @@ public class Stats {
             boolean isBase(String[] stats) {
                 return true;
             }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
+            }
         };
         parser.addParser(statParser);
         map = parser.getStats();
@@ -228,7 +259,7 @@ public class Stats {
             statsMap.putAll(map);
         }
 
-        parser = new FileParser(dentriesReader, "dcache", logger);
+        parser = new FileParser(dentriesReader, "dcache", logger, null);
         statParser = new FileParser.StatParser(DENTRIES_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -238,6 +269,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(statParser);
@@ -251,7 +287,7 @@ public class Stats {
 
     public Map<String, Object> getLoadStats() {
         BufferedReader reader = getStream(LOADAVG_STAT_PATH);
-        FileParser parser = new FileParser(reader, "load average", logger);
+        FileParser parser = new FileParser(reader, "load average", logger, null);
         FileParser.StatParser statParser = new FileParser.StatParser(LOADAVG_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -261,6 +297,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(statParser);
@@ -309,7 +350,7 @@ public class Stats {
         BufferedReader reader = getStream(STAT_PATH);
         Map<String, Object> statsMap;
 
-        FileParser parser = new FileParser(reader, "page", logger);
+        FileParser parser = new FileParser(reader, "page", logger, null);
         FileParser.StatParser pageParser = new FileParser.StatParser(PAGE_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -319,6 +360,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(pageParser);
@@ -331,6 +377,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(swapParser);
@@ -349,7 +400,7 @@ public class Stats {
 
         reader = getStream(LOADAVG_STAT_PATH);
 
-        FileParser parser = new FileParser(reader, "process", logger);
+        FileParser parser = new FileParser(reader, "process", logger, null);
         FileParser.StatParser statParser = new FileParser.StatParser(PROC_LOADAVG_STATS, SPACE_REGEX + "|/") {
             @Override
             boolean isMatchType(String line) {
@@ -359,6 +410,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(statParser);
@@ -372,7 +428,7 @@ public class Stats {
 
     public Map<String, Object> getSockStats() {
         BufferedReader reader = getStream(SOCK_STAT_PATH);
-        FileParser parser = new FileParser(reader, "socket", logger);
+        FileParser parser = new FileParser(reader, "socket", logger, null);
         FileParser.StatParser sockParser = new FileParser.StatParser(SOCK_USED_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -382,6 +438,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(sockParser);
@@ -395,6 +456,11 @@ public class Stats {
             boolean isBase(String[] stats) {
                 return true;
             }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
+            }
         };
         parser.addParser(tcpParser);
         FileParser.StatParser udpParser = new FileParser.StatParser(UDP_INUSE_STATS, SPACE_REGEX) {
@@ -406,6 +472,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(udpParser);
@@ -419,6 +490,11 @@ public class Stats {
             boolean isBase(String[] stats) {
                 return true;
             }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
+            }
         };
         parser.addParser(rawParser);
         FileParser.StatParser ipfragParser = new FileParser.StatParser(IPFRAG_STATS, SPACE_REGEX) {
@@ -430,6 +506,11 @@ public class Stats {
             @Override
             boolean isBase(String[] stats) {
                 return true;
+            }
+
+            @Override
+            boolean isCountRequired() {
+                return false;
             }
         };
         parser.addParser(ipfragParser);

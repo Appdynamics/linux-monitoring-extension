@@ -40,6 +40,7 @@ Note : Please make sure not to use tab (\t) while editing yaml files. You can va
 |iowait					|IO Wait	
 |system					|System
 |user					|User
+|CPU cores (logical)    | Number of CPU cores
 
 ### Metric Category: disk
 
