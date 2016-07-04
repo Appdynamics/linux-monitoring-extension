@@ -58,6 +58,15 @@ Note : Please make sure not to use tab (\t) while editing yaml files. You can va
 |writes merged 					|Number of writes merged
 |Avg I/O Utilization %          |Percentage of CPU time during which I/O requests were issued to the device
 
+### Metric Category: disk usage
+
+|Metric Name            	|Description|
+|------------------------------	|------------|
+|size (MB)	                    |	
+|used (MB) 	                    |
+|available (MB)					|
+|use %       					|
+
 ### Metric Category: file
 
 |Metric Name            	|Description|

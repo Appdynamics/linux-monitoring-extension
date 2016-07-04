@@ -39,7 +39,7 @@ public class Stats {
     private static final String VM_STAT_PATH = "/proc/vmstat";
     private static final String SOCK_STAT_PATH = "/proc/net/sockstat";
 
-    private static final String DISK_USAGE_CMD = "df -kP 2>/dev/null";
+    private static final String[] DISK_USAGE_CMD = {"bash", "-c", "exec df -mP 2>/dev/null"};
     private static final String SPACE_REGEX = "[\t ]+";
     private static final String SPACE_COLON_REGEX = "[\t :]+";
 
@@ -58,7 +58,7 @@ public class Stats {
                     "time spent writing (ms)", "I/Os currently in progress", "time spent doing I/Os (ms)",
                     "weighted time spent doing I/Os (ms)"};
     private static String[] DISK_USAGE_STATS =
-            {IDENTIFIER, "blocks (1024)", "used (KB)", "available (KB)", "capacity %"};
+            {IDENTIFIER, "size (MB)", "used (MB)", "available (MB)", "use %"};
     private static String[] FILE_NR_STATS = {"fhalloc", "fhfree", "fhmax"};
     private static String[] INODE_NR_STATS = {"inalloc", "infree"};
     private static String[] DENTRIES_STATS = {"dentries", "unused", "agelimit", "wantpages"};
@@ -128,7 +128,7 @@ public class Stats {
         FileParser.StatParser statParser = new FileParser.StatParser(DISK_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
-                return true;
+                return line.contains("sd") | line.contains("hd");
             }
 
             @Override
@@ -203,7 +203,14 @@ public class Stats {
         };
         parser.addParser(statParser);
 
-        return parser.getStats();
+        Map<String, Object> stats = parser.getStats();
+        for (Map.Entry<String, Object> diskStats : stats.entrySet()) {
+            Map<String, Object> diskStat = (Map) diskStats.getValue();
+            String capacityValue = (String) diskStat.get("use %");
+            diskStat.put("use %", capacityValue.replace("%", "").trim());
+        }
+
+        return stats;
     }
 
     public Map<String, Object> getFileStats() {
