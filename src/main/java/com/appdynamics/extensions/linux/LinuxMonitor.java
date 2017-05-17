@@ -71,7 +71,7 @@ public class LinuxMonitor extends AManagedMonitor {
         Map<String, Object> statsMap = new HashMap<String, Object>();
         Map<String, Object> map;
 
-        if ((map = stats.getDiskStats()) != null) {
+        if ((map = stats.getDiskStats(config.getDiskIncludes())) != null) {
             statsMap.put("disk", map);
         }
 

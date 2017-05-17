@@ -15,6 +15,8 @@
  */
 package com.appdynamics.extensions.linux.config;
 
+import java.util.List;
+
 /**
  * Created by balakrishnav on 19/10/15.
  */
@@ -22,6 +24,7 @@ public class Configuration {
 
     private MountedNFS[] mountedNFS;
     private String metricPrefix;
+    private List<String> diskIncludes;
 
     public MountedNFS[] getMountedNFS() {
         return mountedNFS;
@@ -37,5 +40,13 @@ public class Configuration {
 
     public void setMetricPrefix(String metricPrefix) {
         this.metricPrefix = metricPrefix;
+    }
+
+    public List<String> getDiskIncludes() {
+        return diskIncludes;
+    }
+
+    public void setDiskIncludes(List<String> diskIncludes) {
+        this.diskIncludes = diskIncludes;
     }
 }

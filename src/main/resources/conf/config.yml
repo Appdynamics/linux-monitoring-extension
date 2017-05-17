@@ -5,10 +5,16 @@ mountedNFS:
       - fileSystem: "/dev/sdb"
         displayName: "NFS1"
 
+# "diskIncludes" to fetch disk statistics only for the configured.
+# Ex: ["*"] fetches all disks
+# ["sda.*", "ram1", "loop0"]
+diskIncludes: ["*"]
+
+
 
 # This will create this metric in all the tiers, under this path
-metricPrefix: "Custom Metrics|Linux|"
+#metricPrefix: "Custom Metrics|Linux|"
 
 # This will create it in specific Tier. Replace <ComponentID>
 # (https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java)
-# metricPrefix: Server|Component:<ComponentID>|Custom Metrics|Linux
+metricPrefix: Server|Component:<ComponentID>|Custom Metrics|Linux

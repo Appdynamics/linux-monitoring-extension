@@ -15,11 +15,13 @@
  */
 package com.appdynamics.extensions.linux;
 
+import com.google.common.collect.Lists;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,6 +42,39 @@ public class LinuxMonitorTest {
     public void testNFSMountStatusProcessor() {
         NFSMountStatusProcessor processor = new NFSMountStatusProcessor();
         Assert.assertEquals(processor.execute("/dev/sda1"), "1");
+
+    }
+
+    @Test
+    public void testIsDiskIncluded() {
+        Stats stats = new Stats(null);
+
+        String line = " 253     201 dm-201 7759 0 1480475 25933 13112075 0 104896600 92663065 0 4608730 92797611";
+        List<String> diskIncludes = Lists.newArrayList();
+        diskIncludes.add("*");
+        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), true);
+
+        diskIncludes.clear();
+        diskIncludes.add("sda1");
+        diskIncludes.add("as.*");
+        diskIncludes.add("*");
+        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), true);
+
+        diskIncludes.clear();
+        diskIncludes.add("sda1");
+        diskIncludes.add("as.*");
+        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), false);
+
+        diskIncludes.clear();
+        diskIncludes.add("dm.*");
+        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), true);
+
+        String line1 = "252       0 asm/.asm_ctl_spec 0 0 0 0 0 0 0 0 0 0 0";
+        diskIncludes.clear();
+        diskIncludes.add("as.*");
+        /*diskIncludes.add("sda1");
+        diskIncludes.add("dm.*");*/
+        Assert.assertEquals(stats.isDiskIncluded(line1, diskIncludes), true);
 
     }
 }

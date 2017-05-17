@@ -16,14 +16,20 @@
 
 package com.appdynamics.extensions.linux;
 
+import com.appdynamics.extensions.StringUtils;
+import com.appdynamics.extensions.linux.config.Configuration;
 import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Stats {
@@ -122,13 +128,14 @@ public class Stats {
         return parser.getStats();
     }
 
-    public Map<String, Object> getDiskStats() {
+    public Map<String, Object> getDiskStats(final List<String> diskIncludes) {
         BufferedReader reader = getStream(DISK_STAT_PATH);
+        logger.debug("Fetching disk stats for " + diskIncludes);
         FileParser parser = new FileParser(reader, "disk", logger, null);
         FileParser.StatParser statParser = new FileParser.StatParser(DISK_STATS, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
-                return line.contains("sd") | line.contains("hd");
+                return isDiskIncluded(line, diskIncludes);
             }
 
             @Override
@@ -576,5 +583,23 @@ public class Stats {
             }
         }
         return mountStatsMap;
+    }
+
+    public boolean isDiskIncluded(String line, List<String> diskIncludes) {
+        if (diskIncludes == null || diskIncludes.isEmpty()) {
+            return false;
+        }
+        if (diskIncludes.contains("*")) {
+            return true;
+        }
+        Joiner joiner = Joiner.on("|");
+        String includePattern = joiner.join(diskIncludes);
+        includePattern = "\\b(" + includePattern + ")\\b";
+        Pattern pattern = Pattern.compile(includePattern);
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find()) {
+            return true;
+        }
+        return false;
     }
 }
