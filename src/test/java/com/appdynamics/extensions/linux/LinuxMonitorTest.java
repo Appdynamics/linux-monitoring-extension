@@ -15,66 +15,86 @@
  */
 package com.appdynamics.extensions.linux;
 
-import com.google.common.collect.Lists;
+import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.singularity.ee.agent.systemagent.api.TaskOutput;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by balakrishnav on 16/10/15.
  */
 public class LinuxMonitorTest {
 
+    private LinuxMonitor testClass;
+
+    @Mock
+    private MountedNFS mountedNFS;
+
+    @Mock
+    private NFSMountStatusProcessor nfsProcessor;
+
+    @Before
+    public void init() throws Exception {
+        testClass = new LinuxMonitor();
+
+        mountedNFS = Mockito.mock(MountedNFS.class);
+
+        mountedNFS.setFileSystem("/dev/disk1");
+        mountedNFS.setDisplayName("NFS1");
+
+        nfsProcessor = Mockito.mock(NFSMountStatusProcessor.class);
+
+
+    }
+
     @Test
     public void testLinuxMonitor() throws TaskExecutionException {
         Map<String, String> taskArgs = new HashMap<String, String>();
         taskArgs.put("config-file", "src/test/resources/conf/config.yml");
 
-        LinuxMonitor monitor = new LinuxMonitor();
-        monitor.execute(taskArgs, null);
+        TaskOutput result = testClass.execute(taskArgs, null);
+        assertTrue(result.getStatusMessage().contains("Linux Monitor Metric Upload Complete"));
+
     }
 
     @Test
     public void testNFSMountStatusProcessor() {
         NFSMountStatusProcessor processor = new NFSMountStatusProcessor();
-        Assert.assertEquals(processor.execute("/dev/sda1"), "1");
+        Assert.assertEquals(processor.execute("/dev/disk1").trim(), "1");
 
     }
 
     @Test
-    public void testIsDiskIncluded() {
-        Stats stats = new Stats(null);
+    public void testNFSMountMetrics() {
 
-        String line = " 253     201 dm-201 7759 0 1480475 25933 13112075 0 104896600 92663065 0 4608730 92797611";
-        List<String> diskIncludes = Lists.newArrayList();
-        diskIncludes.add("*");
-        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), true);
+        Map<String, Object> metricData = new HashMap<String, Object>();
 
-        diskIncludes.clear();
-        diskIncludes.add("sda1");
-        diskIncludes.add("as.*");
-        diskIncludes.add("*");
-        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), true);
+        for(int i=0;i<5;i++){
+            metricData.put("tps", 38);
+            metricData.put("kB_read/s", 1030);
+            metricData.put("kB_wrtn/s", 74);
+            metricData.put("kB_read", 489105);
+            metricData.put("kB_wrtn", 35012);
+        }
+        Mockito.when(nfsProcessor.getNFSMetrics(mountedNFS)).thenReturn(metricData);
 
-        diskIncludes.clear();
-        diskIncludes.add("sda1");
-        diskIncludes.add("as.*");
-        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), false);
-
-        diskIncludes.clear();
-        diskIncludes.add("dm.*");
-        Assert.assertEquals(stats.isDiskIncluded(line, diskIncludes), true);
-
-        String line1 = "252       0 asm/.asm_ctl_spec 0 0 0 0 0 0 0 0 0 0 0";
-        diskIncludes.clear();
-        diskIncludes.add("as.*");
-        /*diskIncludes.add("sda1");
-        diskIncludes.add("dm.*");*/
-        Assert.assertEquals(stats.isDiskIncluded(line1, diskIncludes), true);
+        Assert.assertEquals(metricData.size(), 5);
 
     }
+
+    @Test(expected = TaskExecutionException.class)
+    public void testWithNullArgsShouldResultInException() throws Exception {
+        testClass.execute(null, null);
+    }
+
 }

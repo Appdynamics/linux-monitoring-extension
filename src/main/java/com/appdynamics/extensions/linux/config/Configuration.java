@@ -16,6 +16,7 @@
 package com.appdynamics.extensions.linux.config;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by balakrishnav on 19/10/15.
@@ -24,7 +25,8 @@ public class Configuration {
 
     private MountedNFS[] mountedNFS;
     private String metricPrefix;
-    private List<String> diskIncludes;
+    private String numberOfThreads;
+    private List<Map<String, List<Map<String, String>>>> metrics;
 
     public MountedNFS[] getMountedNFS() {
         return mountedNFS;
@@ -42,11 +44,19 @@ public class Configuration {
         this.metricPrefix = metricPrefix;
     }
 
-    public List<String> getDiskIncludes() {
-        return diskIncludes;
+    public List<Map<String, List<Map<String, String>>>> getMetrics() {
+        return metrics;
     }
 
-    public void setDiskIncludes(List<String> diskIncludes) {
-        this.diskIncludes = diskIncludes;
+    public void setMetrics(List<Map<String, List<Map<String, String>>>> metrics) {
+        this.metrics = metrics;
+    }
+
+    public String getNumberOfThreads() {
+        return numberOfThreads;
+    }
+
+    public void setNumberOfThreads(String numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
     }
 }

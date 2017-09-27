@@ -1,8 +1,8 @@
 
 mountedNFS:
-      - fileSystem: "/dev/sdb1"
+      - fileSystem: "/dev/disk1"
         displayName: "usb"
-
-diskIncludes: []
-
 metricPrefix: "Custom Metrics|Linux|"
+
+# number of concurrent tasks
+numberOfThreads: 5

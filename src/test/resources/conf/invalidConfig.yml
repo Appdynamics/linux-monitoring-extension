@@ -1,0 +1,18 @@
+# SQLMonitor Configuration
+
+# Provide password OR encryptedPassword,encryptionKey. See the documentation to find about password encryption.
+
+# isolationLevel:Transaction isolation level to apply on the connection
+#Supported values are TRANSACTION_READ_UNCOMMITTED, TRANSACTION_READ_COMMITTED, TRANSACTION_REPEATABLE_READ and TRANSACTION_SERIALIZABLE
+#Default is TRANSACTION_READ_UNCOMMITTED
+
+
+numberOfThreads: 5
+encryptionKey: "welcome"
+
+
+# Make sure the metric prefix ends with a |
+#This will create this metric in all the tiers, under this path.
+metricPrefix: "Custom Metrics|SQL|"
+#This will create it in specific Tier. Replace <ComponentID> with TierID
+#metricPrefix: "Server|Component:<ComponentID>|Custom Metrics|SQL|"

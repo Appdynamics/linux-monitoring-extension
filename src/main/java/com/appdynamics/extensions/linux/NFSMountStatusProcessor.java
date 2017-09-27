@@ -15,18 +15,31 @@
  */
 package com.appdynamics.extensions.linux;
 
+import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.google.common.base.Strings;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by balakrishnav on 19/10/15.
  */
 public class NFSMountStatusProcessor {
     private Logger logger = Logger.getLogger(NFSMountStatusProcessor.class);
+
+    private static String[] NFS_IO_FILE_STATS = {"tps", "kB_read/s", "kB_wrtn/s", "kB_read", "kB_wrtn"};
+
     private String command = "df | grep %s | wc -l";
+
+    private String nfsIOStatsCmd = "iostat -d %s";
+    private static final String SPACE_REGEX = "[\t ]+";
 
     public String execute(String fileSystem) {
         Runtime rt = Runtime.getRuntime();
@@ -35,14 +48,18 @@ public class NFSMountStatusProcessor {
         String formattedCommand = "";
         try {
             formattedCommand = String.format(command, fileSystem);
+            System.out.println("formatted command: " + formattedCommand);
             p = rt.exec(new String[]{"bash", "-c", formattedCommand});
             input = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line;
             if ((line = input.readLine()) != null) {
+
+                logger.debug("NFS mount output for "+ fileSystem + " is: " + line);
                 return line;
             }
         } catch (Exception e) {
 
+            logger.info("NFS mount error: " + e);
         } finally {
             closeBufferedReader(input);
             cleanUpProcess(p, formattedCommand);
@@ -73,4 +90,39 @@ public class NFSMountStatusProcessor {
             }
         }
     }
+
+    public Map<String, Object> getNFSMetrics(final MountedNFS fileSystem){
+
+            BufferedReader reader = null;
+            Process process = null;
+            String formattedCommand = "";
+
+            Map<String, Object> statsMap = new HashMap<String, Object>();
+            try {
+                formattedCommand = String.format(nfsIOStatsCmd, fileSystem.getFileSystem());
+
+                process = Runtime.getRuntime().exec(formattedCommand);
+                reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+                String line;
+                while ((line = reader.readLine()) != null ) {
+                    if(line.contains(fileSystem.getFileSystem())) {
+                        String[] stats = line.trim().split(SPACE_REGEX);
+                        for (int i = 0; i < NFS_IO_FILE_STATS.length; i++) {
+                            statsMap.put(NFS_IO_FILE_STATS[i], stats[i]);
+                        }
+                    }
+                 }
+
+            } catch (InterruptedIOException e) {
+                logger.error("Command failed to run '" + nfsIOStatsCmd + "' for nfsIOStats" + e);
+            }
+            catch (Exception e) {
+                logger.error("Command ran '" + nfsIOStatsCmd + "' for nfsIOStats" + e);
+            }
+
+            System.out.println("Stats map size: " + statsMap.size());
+            return statsMap;
+        }
+
 }
