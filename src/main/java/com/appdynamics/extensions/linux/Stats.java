@@ -672,7 +672,6 @@ public class Stats {
 
                 for (Map<String, String> metrics : Stats.allMetricsFromConfig.get("nfsIOStats")) {
 
-                    System.out.println("Metric name: " + metrics.get("name") + "StatsEntry key: " + statsEntry.getKey() );
                     if (metrics.get("name").equalsIgnoreCase(String.valueOf(statsEntry.getKey()))) {
 
                         MetricData metricData = new MetricData();
@@ -685,6 +684,7 @@ public class Stats {
                     }
                 }
             }
+            ioStats.addAll(metricStats);
 
         }
         return ioStats;

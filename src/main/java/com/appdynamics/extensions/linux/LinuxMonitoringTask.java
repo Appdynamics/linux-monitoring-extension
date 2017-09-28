@@ -118,7 +118,6 @@ public class LinuxMonitoringTask implements Runnable{
             }
 
             if ((list = stats.getMountIOStats(mountedNFS)) != null) {
-                System.out.println("NFS IO Stats: " + list.size());
                 nfsStats.addAll(list);
             }
             statsMap.put("mountedNFSStats", nfsStats);

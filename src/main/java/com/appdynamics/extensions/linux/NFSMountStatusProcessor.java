@@ -121,7 +121,6 @@ public class NFSMountStatusProcessor {
                 logger.error("Command ran '" + nfsIOStatsCmd + "' for nfsIOStats" + e);
             }
 
-            System.out.println("Stats map size: " + statsMap.size());
             return statsMap;
         }
 
