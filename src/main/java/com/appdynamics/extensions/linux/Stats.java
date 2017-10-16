@@ -16,21 +16,24 @@
 
 package com.appdynamics.extensions.linux;
 
-import com.appdynamics.extensions.linux.config.Configuration;
 import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import javafx.beans.property.MapProperty;
 import org.apache.log4j.Logger;
-import sun.security.krb5.Config;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class Stats {
@@ -86,12 +89,12 @@ public class Stats {
     private static String[] UDP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "udp"};
     private static String[] RAW_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "raw"};
     private static String[] IPFRAG_STATS = {IDENTIFIER, IDENTIFIER, "ipfrag"};
-    private static Logger logger;
     protected static Map<String, List<Map<String, String>>> allMetricsFromConfig = new HashMap<String, List<Map<String, String>>>();
 
+    private static Logger logger  = Logger.getLogger(Stats.class);;
 
-    public Stats(Logger logger, List<Map<String, List<Map<String, String>>>> metrics) {
-        this.logger = logger;
+
+    public Stats(List<Map<String, List<Map<String, String>>>> metrics) {
         populateMetricsMap(metrics);
     }
 
@@ -109,7 +112,7 @@ public class Stats {
 
     public List<MetricData> getCPUStats() {
         BufferedReader reader = getStream(STAT_PATH);
-        FileParser parser = new FileParser(reader, "CPU", logger, "CPU cores (logical)");
+        FileParser parser = new FileParser(reader, "CPU", "CPU cores (logical)");
 
         String[] CPUStats = generateStatsArray("cpuStats");
 
@@ -134,16 +137,17 @@ public class Stats {
         return generateStatsMap(parser.getStats(), "cpuStats");
     }
 
-    public List<MetricData> getDiskStats() {
+    public List<MetricData> getDiskStats(final List<String> diskIncludes) {
         BufferedReader reader = getStream(DISK_STAT_PATH);
-        FileParser parser = new FileParser(reader, "disk", logger, null);
+        logger.debug("Fetching disk stats for " + diskIncludes);
+        FileParser parser = new FileParser(reader, "disk", null);
 
         String[] diskStats = generateStatsArray("diskStats");
 
         FileParser.StatParser statParser = new FileParser.StatParser(diskStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
-                return line.contains("sd") | line.contains("hd");
+                return isDiskIncluded(line, diskIncludes);
             }
 
             @Override
@@ -163,7 +167,7 @@ public class Stats {
 
     public List<MetricData> getNetStats() {
         BufferedReader reader = getStream(NET_STAT_PATH);
-        FileParser parser = new FileParser(reader, "net", logger, null);
+        FileParser parser = new FileParser(reader, "net", null);
 
         String[] netStats = generateStatsArray("netStats");
 
@@ -203,7 +207,7 @@ public class Stats {
             return null;
         }
 
-        FileParser parser = new FileParser(reader, "disk usage", logger, null);
+        FileParser parser = new FileParser(reader, "disk usage", null);
 
         String[] diskUsageStats = generateStatsArray("diskUsageStats");
 
@@ -244,7 +248,7 @@ public class Stats {
         List<MetricData> statsMetrics = new ArrayList<MetricData>();
 
         String[] fileNRStats = generateStatsArray("fileNRStats");
-        FileParser parser = new FileParser(fhReader, "file handler", logger, null);
+        FileParser parser = new FileParser(fhReader, "file handler", null);
         FileParser.StatParser statParser = new FileParser.StatParser(fileNRStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -269,7 +273,7 @@ public class Stats {
 
         String[] inodeNRStats = generateStatsArray("inodeNRStats");
 
-        parser = new FileParser(inodeReader, "inode", logger, null);
+        parser = new FileParser(inodeReader, "inode", null);
         statParser = new FileParser.StatParser(inodeNRStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -296,7 +300,7 @@ public class Stats {
 
         String[] dentriesStats = generateStatsArray("dentriesStats");
 
-        parser = new FileParser(dentriesReader, "dcache", logger, null);
+        parser = new FileParser(dentriesReader, "dcache", null);
         statParser = new FileParser.StatParser(dentriesStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -327,7 +331,7 @@ public class Stats {
 
         String[] loadAvgStats = generateStatsArray("loadAvgStats");
 
-        FileParser parser = new FileParser(reader, "load average", logger, null);
+        FileParser parser = new FileParser(reader, "load average", null);
         FileParser.StatParser statParser = new FileParser.StatParser(loadAvgStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -401,7 +405,7 @@ public class Stats {
         String[] pageSwapStats = generateStatsArray("pageSwapStats");
 
 
-        FileParser parser = new FileParser(reader, "page", logger, null);
+        FileParser parser = new FileParser(reader, "page", null);
         FileParser.StatParser pageParser = new FileParser.StatParser(pageStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -467,7 +471,7 @@ public class Stats {
 
         reader = getStream(LOADAVG_STAT_PATH);
 
-        FileParser parser = new FileParser(reader, "process", logger, null);
+        FileParser parser = new FileParser(reader, "process", null);
         FileParser.StatParser statParser = new FileParser.StatParser(procLoadAvgStats, SPACE_REGEX + "|/") {
             @Override
             boolean isMatchType(String line) {
@@ -503,7 +507,7 @@ public class Stats {
         String[] udpInuseStats = generateStatsArray("udpInuseStats");
         String[] rawInuseStats = generateStatsArray("rawInuseStats");
         String[] ipfragStats = generateStatsArray("ipfragStats");
-        FileParser parser = new FileParser(reader, "socket", logger, null);
+        FileParser parser = new FileParser(reader, "socket", null);
         FileParser.StatParser sockParser = new FileParser.StatParser(sockUsedStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -743,5 +747,23 @@ public class Stats {
             logger.error("No stats found for: " + metricName);
         }
         return metricStats;
+    }
+
+    public boolean isDiskIncluded(String line, List<String> diskIncludes) {
+        if (diskIncludes == null || diskIncludes.isEmpty()) {
+            return false;
+        }
+        if (diskIncludes.contains("*")) {
+            return true;
+        }
+        Joiner joiner = Joiner.on("|");
+        String includePattern = joiner.join(diskIncludes);
+        includePattern = "\\b(" + includePattern + ")\\b";
+        Pattern pattern = Pattern.compile(includePattern);
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find()) {
+            return true;
+        }
+        return false;
     }
 }

@@ -16,10 +16,8 @@
 
 package com.appdynamics.extensions.linux;
 
-import com.appdynamics.extensions.PathResolver;
 import com.appdynamics.extensions.conf.MonitorConfiguration;
-import com.appdynamics.extensions.linux.config.Configuration;
-import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.appdynamics.extensions.util.DeltaMetricsCalculator;
 import com.appdynamics.extensions.util.MetricWriteHelper;
 import com.appdynamics.extensions.util.MetricWriteHelperFactory;
 import com.google.common.base.Strings;
@@ -55,6 +53,9 @@ public class LinuxMonitor extends AManagedMonitor {
 
     private boolean initialized;
 
+    private final DeltaMetricsCalculator deltaCalculator = new DeltaMetricsCalculator(10);
+
+
     public LinuxMonitor() {
         logger.info("Using Monitor Version [" + getImplementationVersion() + "]");
         prevMetricsMap = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
@@ -84,7 +85,7 @@ public class LinuxMonitor extends AManagedMonitor {
         public void run() {
             Map<String, ?> config = configuration.getConfigYml();
             if(config!=null){
-                    configuration.getExecutorService().execute(new LinuxMonitoringTask(configuration, metricPrefix,configFileName,prevMetricsMap));
+                    configuration.getExecutorService().execute(new LinuxMonitoringTask(configuration, metricPrefix,configFileName,prevMetricsMap, deltaCalculator));
             }
             else{
                 logger.error("Configuration not found");
@@ -127,28 +128,11 @@ public class LinuxMonitor extends AManagedMonitor {
         ca.setLayout(new PatternLayout("%-5p [%t]: %m%n"));
         ca.setThreshold(Level.DEBUG);
 
-        //log.getRootLogger().addAppender(ca);
-
         LinuxMonitor monitor = new LinuxMonitor();
-
-
-
 
         final Map<String, String> taskArgs = new HashMap<String, String>();
         taskArgs.put("config-file", "/Users/akshay.srivastava/AppDynamics/extensions/linux-monitoring-extension/src/main/resources/conf/config.yml");
-/*
-        String formattedCommand = "";
 
-        try {
-            String nfsIOStatsCmd = "iostat -d %s";
-            formattedCommand = String.format(nfsIOStatsCmd, "/dev/sdb");
-
-            System.out.println("NFS metrics command: " + formattedCommand);
-            Runtime.getRuntime().exec(formattedCommand);
-            monitor.execute(taskArgs, null);
-        }catch(Exception e){
-            System.out.println("Exception: " + e);
-        }*/
     }
 
 }

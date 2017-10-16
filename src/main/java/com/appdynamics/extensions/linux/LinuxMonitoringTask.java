@@ -1,17 +1,16 @@
 package com.appdynamics.extensions.linux;
 
-import com.appdynamics.extensions.PathResolver;
 import com.appdynamics.extensions.conf.MonitorConfiguration;
 import com.appdynamics.extensions.linux.config.Configuration;
 import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.appdynamics.extensions.util.DeltaMetricsCalculator;
+import com.appdynamics.extensions.util.MetricUtils;
 import com.appdynamics.extensions.yml.YmlReader;
-import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
-import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
 import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,36 +30,15 @@ public class LinuxMonitoringTask implements Runnable{
 
     private Cache<String, Long> prevMetricsMap;
 
-    public MonitorConfiguration getConfiguration() {
-        return configuration;
-    }
+    private DeltaMetricsCalculator deltaCalculator;
 
-    public void setConfiguration(MonitorConfiguration configuration) {
-        this.configuration = configuration;
-    }
-
-    public String getMetricPrefix() {
-        return metricPrefix;
-    }
-
-    public void setMetricPrefix(String metricPrefix) {
-        this.metricPrefix = metricPrefix;
-    }
-
-    public Map<String, ?> getConfigYml() {
-        return configYml;
-    }
-
-    public void setConfigYml(Map<String, ?> configYml) {
-        this.configYml = configYml;
-    }
-
-    public LinuxMonitoringTask(MonitorConfiguration conf, String metricPrefix, String configFileName, Cache<String, Long> prevMetricsMap){
+    public LinuxMonitoringTask(MonitorConfiguration conf, String metricPrefix, String configFileName, Cache<String, Long> prevMetricsMap, DeltaMetricsCalculator deltaCalculator){
         this.configuration = conf;
         this.metricPrefix = metricPrefix;
         this.configYml = conf.getConfigYml();
         this.configFileName = configFileName;
         this.prevMetricsMap = prevMetricsMap;
+        this.deltaCalculator = deltaCalculator;
 
     }
 
@@ -73,11 +51,11 @@ public class LinuxMonitoringTask implements Runnable{
     }
 
     private Map<String, Object> populateMetrics(Configuration config) {
-        Stats stats = new Stats(logger, config.getMetrics());
+        Stats stats = new Stats(config.getMetrics());
         Map<String, Object> statsMap = new HashMap<String, Object>();
         List<MetricData> list;
 
-        if ((list = stats.getDiskStats()) != null) {
+        if ((list = stats.getDiskStats(config.getDiskIncludes())) != null) {
             statsMap.put("disk", list);
         }
 
@@ -134,12 +112,12 @@ public class LinuxMonitoringTask implements Runnable{
 
             List<MetricData> val = (ArrayList)entry.getValue();
             for(MetricData metricData: val) {
-
+                System.out.println("IN printNestedMap: Metric: " + metricData.getName());
                 if(metricData.isCollectDelta()){
-                    Long[] prevValues = processDelta(metricPath, metricData.getStats());
-                    if (prevValues[0] != null) {
-                        printMetric(metricPath + key + "|" +metricData.getName() , getDeltaValue(metricData.getStats(), prevValues), metricData.getMetricType());
-                    }
+                    String metricVal = MetricUtils.toWholeNumberString(metricData.getStats());
+                    BigDecimal deltaMetricValue = deltaCalculator.calculateDelta(metricPath, new BigDecimal(metricVal));
+                    printMetric(metricPath + key + "|" +metricData.getName() + " Delta", deltaMetricValue != null ? deltaMetricValue.toBigInteger() : new BigInteger("0"), metricData.getMetricType());
+
                 }else{
                     printMetric(metricPath + key + "|" +metricData.getName(), metricData.getStats(), metricData.getMetricType());
                 }
@@ -182,8 +160,10 @@ public class LinuxMonitoringTask implements Runnable{
 
     private void printMetric(String metricName, Object metricValue, String metricType) {
         if (metricValue != null) {
-
-            this.configuration.getMetricWriter().printMetric(metricName, toWholeNumber(metricValue), metricType);
+            String metric  = MetricUtils.toWholeNumberString(metricValue);
+            metric = metric!=null && metric.trim().length()!=0 ?  metric : "0";
+            System.out.println("Metric name: "+ metricName + " val: " + metric);
+            this.configuration.getMetricWriter().printMetric(metricName, new BigDecimal(metric), metricType);
         }
     }
 
@@ -202,23 +182,6 @@ public class LinuxMonitoringTask implements Runnable{
             return f.floatValue() > 0.0F && f.floatValue() < 1.0F ? BigDecimal.ONE : BigDecimal.valueOf(Math.round(((Float) attribute).floatValue()));
         }
         return null;
-    }
-
-    private String getConfigFilename(String filename) {
-        if (filename == null) {
-            return "";
-        }
-        // for absolute paths
-        if (new File(filename).exists()) {
-            return filename;
-        }
-        // for relative paths
-        File jarPath = PathResolver.resolveDirectory(AManagedMonitor.class);
-        String configFileName = "";
-        if (!Strings.isNullOrEmpty(filename)) {
-            configFileName = jarPath + File.separator + filename;
-        }
-        return configFileName;
     }
 
 }

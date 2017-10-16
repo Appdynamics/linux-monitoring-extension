@@ -26,6 +26,7 @@ public class Configuration {
     private MountedNFS[] mountedNFS;
     private String metricPrefix;
     private String numberOfThreads;
+    private List<String> diskIncludes;
     private List<Map<String, List<Map<String, String>>>> metrics;
 
     public MountedNFS[] getMountedNFS() {
@@ -58,5 +59,13 @@ public class Configuration {
 
     public void setNumberOfThreads(String numberOfThreads) {
         this.numberOfThreads = numberOfThreads;
+    }
+
+    public List<String> getDiskIncludes() {
+        return diskIncludes;
+    }
+
+    public void setDiskIncludes(List<String> diskIncludes) {
+        this.diskIncludes = diskIncludes;
     }
 }
