@@ -95,20 +95,24 @@ public class LinuxMonitor extends AManagedMonitor {
 
     public TaskOutput execute(Map<String, String> taskArgs, TaskExecutionContext taskExecutionContext)
             throws TaskExecutionException {
-
-        if (taskArgs != null) {
-            if (!initialized) {
-                configure(taskArgs);
+        String msg = "Using Monitor Version [" + getImplementationVersion() + "]";
+        logger.info(msg);
+        try{
+            if (taskArgs != null) {
+                if (!initialized) {
+                    configure(taskArgs);
+                }
+                logger.info("Starting the Linux Monitoring task");
+                if (logger.isDebugEnabled()) {
+                    logger.debug("The arguments after appending the default values are " + taskArgs);
+                }
+                configuration.executeTask();
+                return new TaskOutput("Linux Monitor Metric Upload Complete");
             }
-            logger.info("Starting the Linux Monitoring task");
-            if (logger.isDebugEnabled()) {
-                logger.debug("The arguments after appending the default values are " + taskArgs);
-            }
-            configuration.executeTask();
-            return new TaskOutput("Linux Monitor Metric Upload Complete");
+        }catch(Exception e) {
+                logger.error("Failed to execute the Linux monitoring task", e);
         }
         throw new TaskExecutionException(logVersion() + "Linux monitoring task completed with failures.");
-
     }
 
     private String logVersion() {
