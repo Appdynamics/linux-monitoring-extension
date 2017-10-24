@@ -53,45 +53,14 @@ public class Stats {
     private static final String SPACE_REGEX = "[\t ]+";
     private static final String SPACE_COLON_REGEX = "[\t :]+";
 
-    private static String[] CPU_STATS =
-            {IDENTIFIER, "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal", "guest", "guest_nice"};
-    private static String[] PAGE_STATS = {"page", "page in", "page out"};
-    private static String[] SWAP_STATS = {"swap", "swap page in", "swap page out"};
-    private static String[] NET_STATS =
-            {IDENTIFIER, "receive bytes", "receive packets", "receive errs", "receive drop", "receive fifo",
-                    "receive frame", "receive compressed", "receive multicast", "transmit bytes", "transmit packets",
-                    "transmit errs", "transmit drop", "transmit fifo", "transmit colls", "transmit carrier",
-                    "transmit compressed"};
-    private static String[] DISK_STATS =
-            {"major", "minor", IDENTIFIER, "reads completed successfully", "reads merged", "sectors read",
-                    "time spent reading (ms)", "writes completed", "writes merged", "sectors written",
-                    "time spent writing (ms)", "I/Os currently in progress", "time spent doing I/Os (ms)",
-                    "weighted time spent doing I/Os (ms)"};
-    private static String[] DISK_USAGE_STATS =
-            {IDENTIFIER, "size (MB)", "used (MB)", "available (MB)", "use %"};
-    private static String[] FILE_NR_STATS = {"fhalloc", "fhfree", "fhmax"};
-    private static String[] INODE_NR_STATS = {"inalloc", "infree"};
-    private static String[] DENTRIES_STATS = {"dentries", "unused", "agelimit", "wantpages"};
-    private static String[] LOADAVG_STATS = {"load avg (1 min)", "load avg (5 min)", "load avg (15 min)"};
     private static String[] MEM_FILE_STATS =
             {"MemTotal", "MemFree", "Buffers", "Cached", "SwapCached", "Active", "Inactive", "SwapTotal", "SwapFree",
                     "Dirty", "Writeback", "Mapped", "Slab", "CommitLimit", "Committed_AS"};
-    private static String[] MEM_STATS = {"total", "free", "buffers", "cached", "swap cached", "active", "inactive",
-            "swap total", "swap free", "dirty", "writeback", "mapped", "slab", "commit limit", "committed_as"};
     private static String[] PAGE_SWAP_FILE_STATS = {"pgpgin", "pgpgout", "pswpin", "pswpout", "pgfault", "pgmajfault"};
-    private static String[] PAGE_SWAP_STATS = {"page in", "page out", "swap page in", "swap page out", "page fault",
-            "page major fault"};
     private static String[] PROC_FILE_STATS = {"processes", "procs_running", "procs_blocked"};
-    private static String[] PROC_STATS = {"processes", "running", "blocked"};
-    private static String[] PROC_LOADAVG_STATS = {IDENTIFIER, IDENTIFIER, IDENTIFIER, "runqueue", "count"};
-    private static String[] SOCK_USED_STATS = {IDENTIFIER, IDENTIFIER, "used"};
-    private static String[] TCP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "tcp"};
-    private static String[] UDP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "udp"};
-    private static String[] RAW_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "raw"};
-    private static String[] IPFRAG_STATS = {IDENTIFIER, IDENTIFIER, "ipfrag"};
     protected static Map<String, List<Map<String, String>>> allMetricsFromConfig = new HashMap<String, List<Map<String, String>>>();
 
-    private static Logger logger  = Logger.getLogger(Stats.class);;
+    private static Logger logger  = Logger.getLogger(Stats.class);
 
 
     public Stats(List<Map<String, List<Map<String, String>>>> metrics) {
@@ -291,12 +260,12 @@ public class Stats {
             }
         };
         parser.addParser(statParser);
-/*
+
         metrics = generateStatsMap(parser.getStats(),"iNodeNRStats");
         if (metrics != null) {
-            statsMap.addAll(metrics);
+            statsMetrics.addAll(metrics);
         }
-*/
+
 
         String[] dentriesStats = generateStatsArray("dentriesStats");
 
@@ -612,7 +581,7 @@ public class Stats {
                                             String description, int keyIndex, int valIndex) {
         Map<String, Object> statsMap = null;
         if (reader == null) {
-            logger.error("Failed to read " + description + " stats");
+            logger.error("Failed to read " + description + " stats as reader is null");
         } else {
             statsMap = new HashMap<String, Object>();
 
@@ -636,7 +605,7 @@ public class Stats {
                     reader.close();
                 }
             } catch (IOException e) {
-                logger.error("Failed to read " + description + " stats");
+                logger.error("Failed to read " + description + " stats: " + e.getStackTrace());
             }
         }
 
@@ -703,6 +672,8 @@ public class Stats {
 
     protected static String[] generateStatsArray(String metricName){
 
+        logger.debug("Generating Stats Array for metric: " + metricName);
+
         String[] stats = new String[allMetricsFromConfig.get(metricName).size()+1];
         int index = 0;
         for(Map<String,String> metricsEntry: allMetricsFromConfig.get(metricName)){
@@ -715,33 +686,41 @@ public class Stats {
 
         List<MetricData> metricStats = new ArrayList<MetricData>();
         if(statsMap!=null) {
+            logger.debug("Generating Stats Map for metric: " + metricName);
 
             for (Map.Entry<String, Object> statsEntry : statsMap.entrySet()) {
-                for (Map<String, String> metrics : allMetricsFromConfig.get(metricName)) {
+                List<Map<String, String>> metricConfig = allMetricsFromConfig.get(metricName);
+                if(metricConfig!=null) {
 
-                  if (metrics.get("name").equalsIgnoreCase(statsEntry.getKey()) ) {
+                    for (Map<String, String> metrics : metricConfig) {
 
-                        MetricData metricData = new MetricData();
-                        metricData.setStats(statsEntry.getValue());
-                        metricData.setName(metrics.get("name"));
-                        metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
-                        metricData.setMetricType(metrics.get("metricType"));
+                        if (metrics != null && metrics.get("name").equalsIgnoreCase(statsEntry.getKey())) {
 
-                        metricStats.add(metricData);
+                            logger.debug("Adding stats for the entry: " + metrics.get("name") + " with value: " + statsEntry.getValue());
+
+                            MetricData metricData = new MetricData();
+                            metricData.setStats(statsEntry.getValue());
+                            metricData.setName(metrics.get("name"));
+                            metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
+                            metricData.setMetricType(metrics.get("metricType"));
+
+                            metricStats.add(metricData);
+                        }
+
+                        if (metricName.equalsIgnoreCase("mountedNFSStatus")) {
+
+                            logger.debug("Adding stats for the entry: " + metrics.get("name") + " with value: " + statsEntry.getValue());
+
+                            MetricData metricData = new MetricData();
+                            metricData.setStats(statsEntry.getValue());
+                            metricData.setName(statsEntry.getKey() + "|" + metrics.get("name"));
+                            metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
+                            metricData.setMetricType(metrics.get("metricType"));
+
+                            metricStats.add(metricData);
+                        }
                     }
-
-                  if(metricName.equalsIgnoreCase("mountedNFSStatus") ){
-
-                        MetricData metricData = new MetricData();
-                        metricData.setStats(statsEntry.getValue());
-                        metricData.setName(statsEntry.getKey() + "|" + metrics.get("name"));
-                        metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
-                        metricData.setMetricType(metrics.get("metricType"));
-
-                        metricStats.add(metricData);
-                  }
                 }
-
             }
         }else{
             logger.error("No stats found for: " + metricName);

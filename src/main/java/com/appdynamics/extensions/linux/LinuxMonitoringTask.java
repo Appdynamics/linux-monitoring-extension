@@ -112,15 +112,13 @@ public class LinuxMonitoringTask implements Runnable{
 
             List<MetricData> val = (ArrayList)entry.getValue();
             for(MetricData metricData: val) {
-                System.out.println("IN printNestedMap: Metric: " + metricData.getName());
                 if(metricData.isCollectDelta()){
                     String metricVal = MetricUtils.toWholeNumberString(metricData.getStats());
                     BigDecimal deltaMetricValue = deltaCalculator.calculateDelta(metricPath, new BigDecimal(metricVal));
                     printMetric(metricPath + key + "|" +metricData.getName() + " Delta", deltaMetricValue != null ? deltaMetricValue.toBigInteger() : new BigInteger("0"), metricData.getMetricType());
 
-                }else{
-                    printMetric(metricPath + key + "|" +metricData.getName(), metricData.getStats(), metricData.getMetricType());
                 }
+                printMetric(metricPath + key + "|" +metricData.getName(), metricData.getStats(), metricData.getMetricType());
 
                 // compute Avg IO utilization using metric in diskstats
                 if ("time spent doing I/Os (ms)".equals(key)) {
@@ -162,7 +160,6 @@ public class LinuxMonitoringTask implements Runnable{
         if (metricValue != null) {
             String metric  = MetricUtils.toWholeNumberString(metricValue);
             metric = metric!=null && metric.trim().length()!=0 ?  metric : "0";
-            System.out.println("Metric name: "+ metricName + " val: " + metric);
             this.configuration.getMetricWriter().printMetric(metricName, new BigDecimal(metric), metricType);
         }
     }

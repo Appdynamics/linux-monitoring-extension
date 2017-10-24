@@ -45,7 +45,6 @@ public class NFSMountStatusProcessor {
         String formattedCommand = "";
         try {
             formattedCommand = String.format(command[0], fileSystem);
-            System.out.println("formatted command: " + formattedCommand);
             p = rt.exec(new String[]{"bash", "-c", formattedCommand});
             input = new BufferedReader(new InputStreamReader(p.getInputStream()));
             String line;
@@ -75,7 +74,7 @@ public class NFSMountStatusProcessor {
                     if(line.contains(fileSystem.getFileSystem())) {
                         String[] stats = line.trim().split(SPACE_REGEX);
                         for (int i = 0; i < NFS_IO_FILE_STATS.length; i++) {
-                            statsMap.put(NFS_IO_FILE_STATS[i], stats[i]);
+                            statsMap.put(NFS_IO_FILE_STATS[i], stats[i+1]);
                         }
                     }
                  }
