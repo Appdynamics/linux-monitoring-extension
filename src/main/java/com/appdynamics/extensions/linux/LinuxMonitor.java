@@ -16,21 +16,23 @@
 
 package com.appdynamics.extensions.linux;
 
-import com.appdynamics.extensions.PathResolver;
-import com.appdynamics.extensions.linux.config.Configuration;
-import com.appdynamics.extensions.linux.config.MountedNFS;
-import com.appdynamics.extensions.yml.YmlReader;
+import com.appdynamics.extensions.conf.MonitorConfiguration;
+import com.appdynamics.extensions.util.DeltaMetricsCalculator;
+import com.appdynamics.extensions.util.MetricWriteHelper;
+import com.appdynamics.extensions.util.MetricWriteHelperFactory;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
-import com.singularity.ee.agent.systemagent.api.MetricWriter;
 import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
 import com.singularity.ee.agent.systemagent.api.TaskOutput;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
-import java.io.File;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -39,176 +41,78 @@ import java.util.concurrent.TimeUnit;
 public class LinuxMonitor extends AManagedMonitor {
 
     private static Logger logger = Logger.getLogger(LinuxMonitor.class);
+
+    public static final String DEFAULT_METRIC_PREFIX = "Custom Metrics|LinuxMonitor|";
+
+    private String metricPrefix = DEFAULT_METRIC_PREFIX;
+
+    private MonitorConfiguration configuration;
+    private String configFileName;
+
     private Cache<String, Long> prevMetricsMap;
 
+    private boolean initialized;
+
+    private final DeltaMetricsCalculator deltaCalculator = new DeltaMetricsCalculator(10);
+
+
     public LinuxMonitor() {
-        System.out.println(logVersion());
+        logger.info("Using Monitor Version [" + getImplementationVersion() + "]");
         prevMetricsMap = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    }
+
+    private void configure(Map<String, String> argsMap) {
+        logger.info("Initializing the Linux Configuration");
+        MetricWriteHelper metricWriteHelper = MetricWriteHelperFactory.create(this);
+        MonitorConfiguration conf = new MonitorConfiguration(metricPrefix, new TaskRunnable(), metricWriteHelper);
+        configFileName = argsMap.get("config-file");
+        if(Strings.isNullOrEmpty(configFileName)){
+            configFileName = "monitors/LinuxMonitor/config.yml";
+        }
+        conf.setConfigYml(configFileName);
+        conf.checkIfInitialized(MonitorConfiguration.ConfItem.CONFIG_YML, MonitorConfiguration.ConfItem.EXECUTOR_SERVICE,
+                MonitorConfiguration.ConfItem.METRIC_PREFIX, MonitorConfiguration.ConfItem.METRIC_WRITE_HELPER);
+        this.configuration = conf;
+        String prefix = (String)this.configuration.getConfigYml().get("metricPrefix");
+        if(!Strings.isNullOrEmpty(prefix)){
+            metricPrefix = prefix;
+        }
+        initialized = true;
+    }
+
+    private class TaskRunnable implements Runnable {
+
+        public void run() {
+            Map<String, ?> config = configuration.getConfigYml();
+            if(config!=null){
+                    configuration.getExecutorService().execute(new LinuxMonitoringTask(configuration, metricPrefix,configFileName,prevMetricsMap, deltaCalculator));
+            }
+            else{
+                logger.error("Configuration not found");
+            }
+        }
     }
 
     public TaskOutput execute(Map<String, String> taskArgs, TaskExecutionContext taskExecutionContext)
             throws TaskExecutionException {
-        if (taskArgs != null) {
-            logger.info(logVersion());
-            try {
-                String configFilename = getConfigFilename(taskArgs.get("config-file"));
-                Configuration config = YmlReader.readFromFile(configFilename, Configuration.class);
-
-                Map<String, Object> statsMap = populateMetrics(config);
-                printNestedMap(statsMap, config.getMetricPrefix());
-
-                logger.info("Linux Monitoring Task completed successfully");
-                return new TaskOutput("Linux Monitoring Task completed successfully");
-            } catch (Exception e) {
-                logger.error("Linux Metric Upload Failed ", e);
-            }
-        }
-        throw new TaskExecutionException("Linux Monitor completed with failures");
-    }
-
-    private Map<String, Object> populateMetrics(Configuration config) {
-        Stats stats = new Stats(logger);
-        Map<String, Object> statsMap = new HashMap<String, Object>();
-        Map<String, Object> map;
-
-        if ((map = stats.getDiskStats(config.getDiskIncludes())) != null) {
-            statsMap.put("disk", map);
-        }
-
-        if ((map = stats.getCPUStats()) != null) {
-            statsMap.put("CPU", map);
-        }
-
-        if ((map = stats.getDiskUsage()) != null) {
-            statsMap.put("disk usage", map);
-        }
-        if ((map = stats.getFileStats()) != null) {
-            statsMap.put("file", map);
-        }
-        if ((map = stats.getLoadStats()) != null) {
-            statsMap.put("load average", map);
-        }
-        if ((map = stats.getMemStats()) != null) {
-            statsMap.put("memory", map);
-        }
-        if ((map = stats.getNetStats()) != null) {
-            statsMap.put("network", map);
-        }
-        if ((map = stats.getPageSwapStats()) != null) {
-            statsMap.put("page", map);
-        }
-        if ((map = stats.getProcStats()) != null) {
-            statsMap.put("process", map);
-        }
-        if ((map = stats.getSockStats()) != null) {
-            statsMap.put("socket", map);
-        }
-        MountedNFS[] mountedNFS = config.getMountedNFS();
-        if(mountedNFS != null) { //Null check to MountedNFS
-            if ((map = stats.getMountStatus(mountedNFS)) != null) {
-                statsMap.put("nfsMountStatus", map);
-            }
-        }
-        return statsMap;
-    }
-
-    private void printNestedMap(Map<String, Object> map, String metricPath) {
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String key = entry.getKey();
-            Object val = entry.getValue();
-            if (val instanceof Map) {
-                printNestedMap((Map) val, metricPath + key + "|");
-            } else {
-                // compute Avg IO utilization using metric in diskstats
-                if ("time spent doing I/Os (ms)".equals(key)) {
-                    Long[] prevValues = processDelta(metricPath, val);
-                    if (prevValues[0] != null) {
-                        printMetric(metricPath + "Avg I/O Utilization %", getDeltaValue(val, prevValues));
-                    }
+        String msg = "Using Monitor Version [" + getImplementationVersion() + "]";
+        logger.info(msg);
+        try{
+            if (taskArgs != null) {
+                if (!initialized) {
+                    configure(taskArgs);
                 }
-                printMetric(metricPath + key, val);
-            }
-        }
-    }
-
-    private Long[] processDelta(String metricName, Object timeSpentDoingIOInms) {
-        String timeElapsed = "timeElapsed";
-        Long prevMetricValue = prevMetricsMap.getIfPresent(metricName);
-        Long prevTimeElapsed = prevMetricsMap.getIfPresent(metricName + timeElapsed);
-        Long[] prevValues = {prevMetricValue, prevTimeElapsed};
-        if (timeSpentDoingIOInms != null) {
-            prevMetricsMap.put(metricName, Long.valueOf((String) timeSpentDoingIOInms));
-            prevMetricsMap.put(metricName + timeElapsed, System.currentTimeMillis());
-        }
-        return prevValues;
-    }
-
-    private Double getDeltaValue(Object currentValue, Long[] prevValues) {
-        if (currentValue == null) {
-            return null;
-        }
-        long currentTime = System.currentTimeMillis();
-        long prevTime = prevValues[1];
-        Long deltaIOTimeSpent = Long.valueOf((String) currentValue) - prevValues[0];
-        Long duration = currentTime - prevTime;
-
-        Double avgIOUtilizationInPercent = (double) deltaIOTimeSpent / (double) duration * 100.0;
-        return avgIOUtilizationInPercent;
-    }
-
-    private void printMetric(String metricName, Object metricValue) {
-        if (metricValue != null) {
-            MetricWriter metricWriter = getMetricWriter(metricName,
-                    MetricWriter.METRIC_AGGREGATION_TYPE_OBSERVATION,
-                    MetricWriter.METRIC_TIME_ROLLUP_TYPE_CURRENT,
-                    MetricWriter.METRIC_CLUSTER_ROLLUP_TYPE_COLLECTIVE
-            );
-            try {
-                String valueString = toWholeNumberString(metricValue);
-                if (valueString != null) {
-                    metricWriter.printMetric(valueString);
-                }
+                logger.info("Starting the Linux Monitoring task");
                 if (logger.isDebugEnabled()) {
-                    logger.debug("metric = " + valueString);
+                    logger.debug("The arguments after appending the default values are " + taskArgs);
                 }
-            } catch (Exception e) {
-                logger.error("Error while reporting metric " + metricName + " " + metricValue, e);
+                configuration.executeTask();
+                return new TaskOutput("Linux Monitor Metric Upload Complete");
             }
+        }catch(Exception e) {
+                logger.error("Failed to execute the Linux monitoring task", e);
         }
-    }
-
-    private String toWholeNumberString(Object attribute) {
-        if (attribute instanceof String) {
-            String attrString = (String) attribute;
-            Double d = Double.valueOf(attrString);
-            return d > 0 && d < 1.0d ? "1" : String.valueOf(Math.round(d));
-        } else if (attribute instanceof Long) {
-            return String.valueOf(attribute);
-        } else if (attribute instanceof Double) {
-            Double f1 = (Double) attribute;
-            return f1.doubleValue() > 0.0D && f1.doubleValue() < 1.0D ? "1" : String.valueOf(Math.round(f1.doubleValue()));
-        } else if (attribute instanceof Float) {
-            Float f = (Float) attribute;
-            return f.floatValue() > 0.0F && f.floatValue() < 1.0F ? "1" : String.valueOf(Math.round(((Float) attribute).floatValue()));
-        }
-        return null;
-    }
-
-    private String getConfigFilename(String filename) {
-        if (filename == null) {
-            return "";
-        }
-        // for absolute paths
-        if (new File(filename).exists()) {
-            return filename;
-        }
-        // for relative paths
-        File jarPath = PathResolver.resolveDirectory(AManagedMonitor.class);
-        String configFileName = "";
-        if (!Strings.isNullOrEmpty(filename)) {
-            configFileName = jarPath + File.separator + filename;
-        }
-        return configFileName;
+        throw new TaskExecutionException(logVersion() + "Linux monitoring task completed with failures.");
     }
 
     private String logVersion() {
@@ -219,4 +123,20 @@ public class LinuxMonitor extends AManagedMonitor {
     public static String getImplementationVersion() {
         return LinuxMonitor.class.getPackage().getImplementationTitle();
     }
+
+
+    public static void main(String[] args) throws TaskExecutionException {
+
+        ConsoleAppender ca = new ConsoleAppender();
+        ca.setWriter(new OutputStreamWriter(System.out));
+        ca.setLayout(new PatternLayout("%-5p [%t]: %m%n"));
+        ca.setThreshold(Level.DEBUG);
+
+        LinuxMonitor monitor = new LinuxMonitor();
+
+        final Map<String, String> taskArgs = new HashMap<String, String>();
+        taskArgs.put("config-file", "/Users/akshay.srivastava/AppDynamics/extensions/linux-monitoring-extension/src/main/resources/conf/config.yml");
+
+    }
+
 }

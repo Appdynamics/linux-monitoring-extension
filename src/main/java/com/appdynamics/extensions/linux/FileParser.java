@@ -32,12 +32,11 @@ public class FileParser {
     private String countMetric;
     private List<StatParser> parserList = new ArrayList<StatParser>();
 
-    private Logger logger;
+    private Logger logger  = Logger.getLogger(FileParser.class);;
 
-    public FileParser(BufferedReader reader, String description, Logger logger, String countMetric) {
+    public FileParser(BufferedReader reader, String description, String countMetric) {
         this.reader = reader;
         this.description = description;
-        this.logger = logger;
         this.countMetric = countMetric;
     }
 

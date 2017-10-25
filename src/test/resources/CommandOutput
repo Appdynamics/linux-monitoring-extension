@@ -1,0 +1,73 @@
+Command:  cat /proc/stat
+Output:
+      user  nice system idle   iowait  irq 
+cpu  135213 3639 15904 1166375 934     220
+cpu0 135213 3639 15904 1166375 934     220
+
+processes 35198
+procs_running 3
+procs_blocked 0
+softirq 917320 3 540218 2636 29695 60193 0 1796 0 0 282779
+
+Command:  cat /proc/net/dev
+Output:
+Interface|   Receive                                                |  Transmit
+         |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed
+   enp0s3: 5681713   7113    0    0    0     0          0         0  1442904    4905    0    0    0     0       0          0
+       lo: 300266    3563    0    0    0     0          0         0   300266    3563    0    0    0     0       0          0
+   enp0s8: 1872      18      0    0    0     0          0         0   621568    3130    0    0    0     0       0          0
+
+
+Command: cat /proc/diskstats
+Output:
+
+Device|    Reads Comepleted| Reads | Sectors | Time Spent | Writes   | Writes | Sectors | Time Spent | I/O Currently | Time During | Weighted Time
+            Succesfully    | Merged|  Read   | Reading(ms)| Completed| Merged | Written | Writing(ms)| In Progress   | I/O (ms)    | Spent During I/O(ms)
+sda   |   46577            |  7135 | 1934418   34260      | 14327    | 20428  | 626400  | 12360      |0              | 26408       | 46556
+sda1  |   46500            |  7135 | 1930298   34220      | 13984    | 20428  | 626400  | 12224      |0              | 26272       | 46380
+
+
+Command: cat /proc/meminfo
+Output:
+
+MemTotal:        2045948 kB
+MemFree:          280820 kB
+MemAvailable:     898712 kB
+Buffers:          142152 kB
+Cached:           578344 kB
+SwapCached:            0 kB
+Active:          1199932 kB
+Inactive:         368096 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Dirty:                36 kB
+Writeback:             0 kB
+Mapped:           193252 kB
+Slab:             131252 kB
+CommitLimit:     1022972 kB
+Committed_AS:    3910336 kB
+
+
+Commad: cat /proc/net/sockstat
+Output:		sockets: used 741
+			TCP: inuse 8 orphan 0 tw 0 alloc 15 mem 0
+			UDP: inuse 13 mem 5
+			UDPLITE: inuse 0
+			RAW: inuse 0
+			FRAG: inuse 0 memory 0
+
+Command: cat /proc/vmstat
+Output:
+		pgpgin 967209
+		pgpgout 314512
+		pswpin 0
+		pswpout 0
+		pgfault 4605513
+		pgmajfault 3873
+
+Command: cat /proc/loadavg
+Output:
+       load avg| load avg | load avg | Currently Running Process |
+       (1 min) |  (5 min) | (15 min) | Total Num of Process      |
+ 	    0.29   |   0.18   |  0.16    | 5/429 
+

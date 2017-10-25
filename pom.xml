@@ -4,7 +4,7 @@
 
     <groupId>com.appdynamics.extensions</groupId>
     <artifactId>linux-monitoring-extension</artifactId>
-    <version>2.0.4</version>
+    <version>2.1.0</version>
     <packaging>jar</packaging>
 
     <name>linux-monitoring-extension</name>
@@ -38,6 +38,28 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.4</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
+            <version>1.4.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>1.4.7</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -88,11 +110,14 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
+                                        <Implementation-Title>Linux Monitor v${project.version} Build Date ${maven.build.timestamp}
+                                        </Implementation-Title>
                                         <Main-Class>com.appdynamics.extensions.workbench.WorkbenchServerLauncher</Main-Class>
-                                        <Implementation-Title>Linux Monitor v${project.version} Build Date ${maven.build.timestamp}</Implementation-Title>
                                     </manifestEntries>
                                 </transformer>
                             </transformers>

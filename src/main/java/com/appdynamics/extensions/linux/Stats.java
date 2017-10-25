@@ -16,15 +16,19 @@
 
 package com.appdynamics.extensions.linux;
 
-import com.appdynamics.extensions.StringUtils;
-import com.appdynamics.extensions.linux.config.Configuration;
 import com.appdynamics.extensions.linux.config.MountedNFS;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.apache.log4j.Logger;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,47 +53,18 @@ public class Stats {
     private static final String SPACE_REGEX = "[\t ]+";
     private static final String SPACE_COLON_REGEX = "[\t :]+";
 
-    private static String[] CPU_STATS =
-            {IDENTIFIER, "user", "nice", "system", "idle", "iowait", "irq", "softirq", "steal", "guest", "guest_nice"};
-    private static String[] PAGE_STATS = {"page", "page in", "page out"};
-    private static String[] SWAP_STATS = {"swap", "swap page in", "swap page out"};
-    private static String[] NET_STATS =
-            {IDENTIFIER, "receive bytes", "receive packets", "receive errs", "receive drop", "receive fifo",
-                    "receive frame", "receive compressed", "receive multicast", "transmit bytes", "transmit packets",
-                    "transmit errs", "transmit drop", "transmit fifo", "transmit colls", "transmit carrier",
-                    "transmit compressed"};
-    private static String[] DISK_STATS =
-            {"major", "minor", IDENTIFIER, "reads completed successfully", "reads merged", "sectors read",
-                    "time spent reading (ms)", "writes completed", "writes merged", "sectors written",
-                    "time spent writing (ms)", "I/Os currently in progress", "time spent doing I/Os (ms)",
-                    "weighted time spent doing I/Os (ms)"};
-    private static String[] DISK_USAGE_STATS =
-            {IDENTIFIER, "size (MB)", "used (MB)", "available (MB)", "use %"};
-    private static String[] FILE_NR_STATS = {"fhalloc", "fhfree", "fhmax"};
-    private static String[] INODE_NR_STATS = {"inalloc", "infree"};
-    private static String[] DENTRIES_STATS = {"dentries", "unused", "agelimit", "wantpages"};
-    private static String[] LOADAVG_STATS = {"load avg (1 min)", "load avg (5 min)", "load avg (15 min)"};
     private static String[] MEM_FILE_STATS =
             {"MemTotal", "MemFree", "Buffers", "Cached", "SwapCached", "Active", "Inactive", "SwapTotal", "SwapFree",
                     "Dirty", "Writeback", "Mapped", "Slab", "CommitLimit", "Committed_AS"};
-    private static String[] MEM_STATS = {"total", "free", "buffers", "cached", "swap cached", "active", "inactive",
-            "swap total", "swap free", "dirty", "writeback", "mapped", "slab", "commit limit", "committed_as"};
     private static String[] PAGE_SWAP_FILE_STATS = {"pgpgin", "pgpgout", "pswpin", "pswpout", "pgfault", "pgmajfault"};
-    private static String[] PAGE_SWAP_STATS = {"page in", "page out", "swap page in", "swap page out", "page fault",
-            "page major fault"};
     private static String[] PROC_FILE_STATS = {"processes", "procs_running", "procs_blocked"};
-    private static String[] PROC_STATS = {"processes", "running", "blocked"};
-    private static String[] PROC_LOADAVG_STATS = {IDENTIFIER, IDENTIFIER, IDENTIFIER, "runqueue", "count"};
-    private static String[] SOCK_USED_STATS = {IDENTIFIER, IDENTIFIER, "used"};
-    private static String[] TCP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "tcp"};
-    private static String[] UDP_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "udp"};
-    private static String[] RAW_INUSE_STATS = {IDENTIFIER, IDENTIFIER, "raw"};
-    private static String[] IPFRAG_STATS = {IDENTIFIER, IDENTIFIER, "ipfrag"};
-    private Logger logger;
+    protected static Map<String, List<Map<String, String>>> allMetricsFromConfig = new HashMap<String, List<Map<String, String>>>();
+
+    private static Logger logger  = Logger.getLogger(Stats.class);
 
 
-    public Stats(Logger logger) {
-        this.logger = logger;
+    public Stats(List<Map<String, List<Map<String, String>>>> metrics) {
+        populateMetricsMap(metrics);
     }
 
 
@@ -104,10 +79,13 @@ public class Stats {
         return reader;
     }
 
-    public Map<String, Object> getCPUStats() {
+    public List<MetricData> getCPUStats() {
         BufferedReader reader = getStream(STAT_PATH);
-        FileParser parser = new FileParser(reader, "CPU", logger, "CPU cores (logical)");
-        FileParser.StatParser statParser = new FileParser.StatParser(CPU_STATS, SPACE_REGEX) {
+        FileParser parser = new FileParser(reader, "CPU", "CPU cores (logical)");
+
+        String[] CPUStats = generateStatsArray("cpuStats");
+
+        FileParser.StatParser statParser = new FileParser.StatParser(CPUStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("cpu");
@@ -125,14 +103,17 @@ public class Stats {
         };
         parser.addParser(statParser);
 
-        return parser.getStats();
+        return generateStatsMap(parser.getStats(), "cpuStats");
     }
 
-    public Map<String, Object> getDiskStats(final List<String> diskIncludes) {
+    public List<MetricData> getDiskStats(final List<String> diskIncludes) {
         BufferedReader reader = getStream(DISK_STAT_PATH);
         logger.debug("Fetching disk stats for " + diskIncludes);
-        FileParser parser = new FileParser(reader, "disk", logger, null);
-        FileParser.StatParser statParser = new FileParser.StatParser(DISK_STATS, SPACE_REGEX) {
+        FileParser parser = new FileParser(reader, "disk", null);
+
+        String[] diskStats = generateStatsArray("diskStats");
+
+        FileParser.StatParser statParser = new FileParser.StatParser(diskStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return isDiskIncluded(line, diskIncludes);
@@ -150,13 +131,16 @@ public class Stats {
         };
         parser.addParser(statParser);
 
-        return parser.getStats();
+        return generateStatsMap(parser.getStats(), "diskStats");
     }
 
-    public Map<String, Object> getNetStats() {
+    public List<MetricData> getNetStats() {
         BufferedReader reader = getStream(NET_STAT_PATH);
-        FileParser parser = new FileParser(reader, "net", logger, null);
-        FileParser.StatParser statParser = new FileParser.StatParser(NET_STATS, SPACE_COLON_REGEX) {
+        FileParser parser = new FileParser(reader, "net", null);
+
+        String[] netStats = generateStatsArray("netStats");
+
+        FileParser.StatParser statParser = new FileParser.StatParser(netStats, SPACE_COLON_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return !line.contains("|");
@@ -174,10 +158,11 @@ public class Stats {
         };
         parser.addParser(statParser);
 
-        return parser.getStats();
+
+        return generateStatsMap(parser.getStats(), "netStats");
     }
 
-    public Map<String, Object> getDiskUsage() {
+    public List<MetricData> getDiskUsage() {
         BufferedReader reader;
         try {
             Process process = Runtime.getRuntime().exec(DISK_USAGE_CMD);
@@ -191,8 +176,11 @@ public class Stats {
             return null;
         }
 
-        FileParser parser = new FileParser(reader, "disk usage", logger, null);
-        FileParser.StatParser statParser = new FileParser.StatParser(DISK_USAGE_STATS, SPACE_REGEX) {
+        FileParser parser = new FileParser(reader, "disk usage", null);
+
+        String[] diskUsageStats = generateStatsArray("diskUsageStats");
+
+        FileParser.StatParser statParser = new FileParser.StatParser(diskUsageStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return !line.startsWith("Filesystem") && !line.startsWith("none");
@@ -210,6 +198,7 @@ public class Stats {
         };
         parser.addParser(statParser);
 
+        // Check, if use % metrics is already being created, then remove this code piece
         Map<String, Object> stats = parser.getStats();
         for (Map.Entry<String, Object> diskStats : stats.entrySet()) {
             Map<String, Object> diskStat = (Map) diskStats.getValue();
@@ -217,18 +206,19 @@ public class Stats {
             diskStat.put("use %", capacityValue.replace("%", "").trim());
         }
 
-        return stats;
+        return generateStatsMap(parser.getStats(), "diskUsageStats");
     }
 
-    public Map<String, Object> getFileStats() {
+    public List<MetricData> getFileStats() {
         BufferedReader fhReader = getStream(FILE_NR_STAT_PATH);
         BufferedReader inodeReader = getStream(INODE_NR_STAT_PATH);
         BufferedReader dentriesReader = getStream(DENTRIES_STAT_PATH);
 
-        Map<String, Object> statsMap = new HashMap<String, Object>();
+        List<MetricData> statsMetrics = new ArrayList<MetricData>();
 
-        FileParser parser = new FileParser(fhReader, "file handler", logger, null);
-        FileParser.StatParser statParser = new FileParser.StatParser(FILE_NR_STATS, SPACE_REGEX) {
+        String[] fileNRStats = generateStatsArray("fileNRStats");
+        FileParser parser = new FileParser(fhReader, "file handler", null);
+        FileParser.StatParser statParser = new FileParser.StatParser(fileNRStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return true;
@@ -245,13 +235,15 @@ public class Stats {
             }
         };
         parser.addParser(statParser);
-        Map<String, Object> map = parser.getStats();
-        if (map != null) {
-            statsMap.putAll(map);
+        List< MetricData> metrics = generateStatsMap(parser.getStats(),"fileNRStats");
+        if (metrics != null) {
+            statsMetrics.addAll(metrics);
         }
 
-        parser = new FileParser(inodeReader, "inode", logger, null);
-        statParser = new FileParser.StatParser(INODE_NR_STATS, SPACE_REGEX) {
+        String[] inodeNRStats = generateStatsArray("inodeNRStats");
+
+        parser = new FileParser(inodeReader, "inode", null);
+        statParser = new FileParser.StatParser(inodeNRStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return true;
@@ -268,13 +260,17 @@ public class Stats {
             }
         };
         parser.addParser(statParser);
-        map = parser.getStats();
-        if (map != null) {
-            statsMap.putAll(map);
+
+        metrics = generateStatsMap(parser.getStats(),"iNodeNRStats");
+        if (metrics != null) {
+            statsMetrics.addAll(metrics);
         }
 
-        parser = new FileParser(dentriesReader, "dcache", logger, null);
-        statParser = new FileParser.StatParser(DENTRIES_STATS, SPACE_REGEX) {
+
+        String[] dentriesStats = generateStatsArray("dentriesStats");
+
+        parser = new FileParser(dentriesReader, "dcache", null);
+        statParser = new FileParser.StatParser(dentriesStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return true;
@@ -291,18 +287,21 @@ public class Stats {
             }
         };
         parser.addParser(statParser);
-        map = parser.getStats();
-        if (map != null) {
-            statsMap.putAll(map);
+        metrics = generateStatsMap(parser.getStats(),"dentriesStats");
+        if (metrics != null) {
+            statsMetrics.addAll(metrics);
         }
 
-        return statsMap;
+        return statsMetrics;
     }
 
-    public Map<String, Object> getLoadStats() {
+    public List<MetricData> getLoadStats() {
         BufferedReader reader = getStream(LOADAVG_STAT_PATH);
-        FileParser parser = new FileParser(reader, "load average", logger, null);
-        FileParser.StatParser statParser = new FileParser.StatParser(LOADAVG_STATS, SPACE_REGEX) {
+
+        String[] loadAvgStats = generateStatsArray("loadAvgStats");
+
+        FileParser parser = new FileParser(reader, "load average", null);
+        FileParser.StatParser statParser = new FileParser.StatParser(loadAvgStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return true;
@@ -320,14 +319,16 @@ public class Stats {
         };
         parser.addParser(statParser);
 
-        return parser.getStats();
+        return generateStatsMap(parser.getStats(), "loadAvgStats");
     }
 
-    public Map<String, Object> getMemStats() {
+    public List<MetricData> getMemStats() {
         BufferedReader reader = getStream(MEM_STAT_PATH);
 
+        String[] memStats = generateStatsArray("memStats");
+
         Map<String, Object> statsMap = getRowStats(reader, SPACE_COLON_REGEX,
-                MEM_FILE_STATS, MEM_STATS, "memory", 0, 1);
+                MEM_FILE_STATS, memStats, "memory", 0, 1);
 
         try {
             Long total = Long.parseLong((String) statsMap.get("total"));
@@ -356,16 +357,25 @@ public class Stats {
             logger.error("Error calculating additional memory stats");
         }
 
-        return statsMap;
+        List<MetricData> metricStats = new ArrayList<MetricData>();
+
+        metricStats.addAll(generateStatsMap(statsMap,"memStats"));
+
+        return metricStats;
 
     }
 
-    public Map<String, Object> getPageSwapStats() {
+    public List< MetricData> getPageSwapStats() {
         BufferedReader reader = getStream(STAT_PATH);
         Map<String, Object> statsMap;
 
-        FileParser parser = new FileParser(reader, "page", logger, null);
-        FileParser.StatParser pageParser = new FileParser.StatParser(PAGE_STATS, SPACE_REGEX) {
+        String[] pageStats = generateStatsArray("pageStats");
+        String[] swapStats = generateStatsArray("swapStats");
+        String[] pageSwapStats = generateStatsArray("pageSwapStats");
+
+
+        FileParser parser = new FileParser(reader, "page", null);
+        FileParser.StatParser pageParser = new FileParser.StatParser(pageStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("page");
@@ -382,7 +392,7 @@ public class Stats {
             }
         };
         parser.addParser(pageParser);
-        FileParser.StatParser swapParser = new FileParser.StatParser(SWAP_STATS, SPACE_REGEX) {
+        FileParser.StatParser swapParser = new FileParser.StatParser(swapStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("swap");
@@ -403,19 +413,35 @@ public class Stats {
         statsMap = parser.getStats();
         if (statsMap == null) {  //page and swap are not in /proc/stat
             reader = getStream(VM_STAT_PATH);
-            statsMap = getRowStats(reader, SPACE_REGEX, PAGE_SWAP_FILE_STATS, PAGE_SWAP_STATS, "page and swap", 0, 1);
+            statsMap = getRowStats(reader, SPACE_REGEX, PAGE_SWAP_FILE_STATS, pageSwapStats, "page and swap", 0, 1);
         }
-        return statsMap;
+
+        List<MetricData> metricStats = new ArrayList<MetricData>();
+
+        metricStats.addAll(generateStatsMap(statsMap,"pageStats"));
+        metricStats.addAll(generateStatsMap(statsMap,"swapStats"));
+        metricStats.addAll(generateStatsMap(statsMap,"pageSwapFileStats"));
+        metricStats.addAll(generateStatsMap(statsMap,"pageSwapStats"));
+
+        return metricStats;
     }
 
-    public Map<String, Object> getProcStats() {
+    public List<MetricData> getProcStats() {
         BufferedReader reader = getStream(STAT_PATH);
-        Map<String, Object> statsMap = getRowStats(reader, SPACE_REGEX, PROC_FILE_STATS, PROC_STATS, "process", 0, 1);
+
+        List<MetricData> metricStats = new ArrayList<MetricData>();
+
+       String[] procStats = generateStatsArray("procStats");
+        String[] procLoadAvgStats = generateStatsArray("procLoadAvgStats");
+
+        Map<String, Object> statsMap = getRowStats(reader, SPACE_REGEX, PROC_FILE_STATS, procStats, "process", 0, 1);
+
+        metricStats.addAll(generateStatsMap(statsMap,"procStats"));
 
         reader = getStream(LOADAVG_STAT_PATH);
 
-        FileParser parser = new FileParser(reader, "process", logger, null);
-        FileParser.StatParser statParser = new FileParser.StatParser(PROC_LOADAVG_STATS, SPACE_REGEX + "|/") {
+        FileParser parser = new FileParser(reader, "process", null);
+        FileParser.StatParser statParser = new FileParser.StatParser(procLoadAvgStats, SPACE_REGEX + "|/") {
             @Override
             boolean isMatchType(String line) {
                 return true;
@@ -434,16 +460,24 @@ public class Stats {
         parser.addParser(statParser);
         Map<String, Object> map = parser.getStats();
         if (map != null) {
-            statsMap.putAll(map);
+            metricStats.addAll(generateStatsMap(map,"procLoadAvgStats"));
         }
 
-        return statsMap;
+        return metricStats;
     }
 
-    public Map<String, Object> getSockStats() {
+    public List<MetricData> getSockStats() {
         BufferedReader reader = getStream(SOCK_STAT_PATH);
-        FileParser parser = new FileParser(reader, "socket", logger, null);
-        FileParser.StatParser sockParser = new FileParser.StatParser(SOCK_USED_STATS, SPACE_REGEX) {
+
+        List<MetricData> metricStats = new ArrayList<MetricData>();
+
+        String[] sockUsedStats = generateStatsArray("sockUsedStats");
+        String[] tcpInuseStats = generateStatsArray("tcpInuseStats");
+        String[] udpInuseStats = generateStatsArray("udpInuseStats");
+        String[] rawInuseStats = generateStatsArray("rawInuseStats");
+        String[] ipfragStats = generateStatsArray("ipfragStats");
+        FileParser parser = new FileParser(reader, "socket", null);
+        FileParser.StatParser sockParser = new FileParser.StatParser(sockUsedStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("sockets");
@@ -460,7 +494,9 @@ public class Stats {
             }
         };
         parser.addParser(sockParser);
-        FileParser.StatParser tcpParser = new FileParser.StatParser(TCP_INUSE_STATS, SPACE_REGEX) {
+        metricStats.addAll(generateStatsMap(parser.getStats(),"sockUsedStats"));
+
+        FileParser.StatParser tcpParser = new FileParser.StatParser(tcpInuseStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("TCP");
@@ -477,7 +513,9 @@ public class Stats {
             }
         };
         parser.addParser(tcpParser);
-        FileParser.StatParser udpParser = new FileParser.StatParser(UDP_INUSE_STATS, SPACE_REGEX) {
+        metricStats.addAll(generateStatsMap(parser.getStats(),"tcpInuseStats"));
+
+        FileParser.StatParser udpParser = new FileParser.StatParser(udpInuseStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("UDP:");
@@ -494,7 +532,9 @@ public class Stats {
             }
         };
         parser.addParser(udpParser);
-        FileParser.StatParser rawParser = new FileParser.StatParser(RAW_INUSE_STATS, SPACE_REGEX) {
+        metricStats.addAll(generateStatsMap(parser.getStats(),"udpInuseStats"));
+
+        FileParser.StatParser rawParser = new FileParser.StatParser(rawInuseStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("RAW");
@@ -511,7 +551,9 @@ public class Stats {
             }
         };
         parser.addParser(rawParser);
-        FileParser.StatParser ipfragParser = new FileParser.StatParser(IPFRAG_STATS, SPACE_REGEX) {
+        metricStats.addAll(generateStatsMap(parser.getStats(),"rawInuseStats"));
+
+        FileParser.StatParser ipfragParser = new FileParser.StatParser(ipfragStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("FRAG");
@@ -528,17 +570,18 @@ public class Stats {
             }
         };
         parser.addParser(ipfragParser);
+        metricStats.addAll(generateStatsMap(parser.getStats(),"ipfragStats"));
 
-        return parser.getStats();
+        return metricStats;
     }
 
 
-    private Map<String, Object> getRowStats(BufferedReader reader, String splitRegex,
+    protected static Map<String, Object> getRowStats(BufferedReader reader, String splitRegex,
                                             String[] fileKey, String[] statsKey,
                                             String description, int keyIndex, int valIndex) {
         Map<String, Object> statsMap = null;
         if (reader == null) {
-            logger.error("Failed to read " + description + " stats");
+            logger.error("Failed to read " + description + " stats as reader is null");
         } else {
             statsMap = new HashMap<String, Object>();
 
@@ -562,18 +605,20 @@ public class Stats {
                     reader.close();
                 }
             } catch (IOException e) {
-                logger.error("Failed to read " + description + " stats");
+                logger.error("Failed to read " + description + " stats: " + e.getStackTrace());
             }
         }
 
         return statsMap;
     }
 
-    public Map<String, Object> getMountStatus(MountedNFS[] mountedNFS) {
+    public List<MetricData> getMountStatus(MountedNFS[] mountedNFS) {
+
         Map<String, Object> mountStatsMap = Maps.newHashMap();
         NFSMountStatusProcessor statusProcessor = new NFSMountStatusProcessor();
         for (MountedNFS fileSystem : mountedNFS) {
             String status = statusProcessor.execute(fileSystem.getFileSystem());
+
             if (!Strings.isNullOrEmpty(status)) {
                 if (!Strings.isNullOrEmpty(fileSystem.getDisplayName())) {
                     mountStatsMap.put(fileSystem.getDisplayName(), status);
@@ -582,7 +627,105 @@ public class Stats {
                 }
             }
         }
-        return mountStatsMap;
+        return generateStatsMap(mountStatsMap,"mountedNFSStatus");
+
+    }
+
+    public List<MetricData> getMountIOStats(MountedNFS[] mountedNFS) {
+
+        List<MetricData> ioStats = new ArrayList<MetricData>();
+
+        NFSMountStatusProcessor statusProcessor = new NFSMountStatusProcessor();
+        for (MountedNFS fileSystem : mountedNFS) {
+            Map<String,Object> statsMap = statusProcessor.getNFSMetrics(fileSystem);
+
+            List<MetricData> metricStats = new ArrayList<MetricData>();
+
+            for(Map.Entry statsEntry : statsMap.entrySet()) {
+
+                for (Map<String, String> metrics : Stats.allMetricsFromConfig.get("nfsIOStats")) {
+
+                    if (metrics.get("name").equalsIgnoreCase(String.valueOf(statsEntry.getKey()))) {
+
+                        MetricData metricData = new MetricData();
+                        metricData.setStats(statsEntry.getValue());
+                        metricData.setName(fileSystem.getDisplayName() + "|" + metrics.get("name"));
+                        metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
+                        metricData.setMetricType(metrics.get("metricType"));
+
+                        metricStats.add(metricData);
+                    }
+                }
+            }
+            ioStats.addAll(metricStats);
+
+        }
+        return ioStats;
+
+    }
+
+    private void populateMetricsMap(List<Map<String, List<Map<String, String>>>> metrics){
+        for(Map<String, List<Map<String, String>>> metricsConfigEntry: metrics){
+            allMetricsFromConfig.putAll(metricsConfigEntry);
+        }
+    }
+
+    protected static String[] generateStatsArray(String metricName){
+
+        logger.debug("Generating Stats Array for metric: " + metricName);
+
+        String[] stats = new String[allMetricsFromConfig.get(metricName).size()+1];
+        int index = 0;
+        for(Map<String,String> metricsEntry: allMetricsFromConfig.get(metricName)){
+            stats[index++] = metricsEntry.get("name");
+        }
+        return stats;
+    }
+
+    protected static List<MetricData> generateStatsMap(Map<String, Object> statsMap, String metricName){
+
+        List<MetricData> metricStats = new ArrayList<MetricData>();
+        if(statsMap!=null) {
+            logger.debug("Generating Stats Map for metric: " + metricName);
+
+            for (Map.Entry<String, Object> statsEntry : statsMap.entrySet()) {
+                List<Map<String, String>> metricConfig = allMetricsFromConfig.get(metricName);
+                if(metricConfig!=null) {
+
+                    for (Map<String, String> metrics : metricConfig) {
+
+                        if (metrics != null && metrics.get("name").equalsIgnoreCase(statsEntry.getKey())) {
+
+                            logger.debug("Adding stats for the entry: " + metrics.get("name") + " with value: " + statsEntry.getValue());
+
+                            MetricData metricData = new MetricData();
+                            metricData.setStats(statsEntry.getValue());
+                            metricData.setName(metrics.get("name"));
+                            metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
+                            metricData.setMetricType(metrics.get("metricType"));
+
+                            metricStats.add(metricData);
+                        }
+
+                        if (metricName.equalsIgnoreCase("mountedNFSStatus")) {
+
+                            logger.debug("Adding stats for the entry: " + metrics.get("name") + " with value: " + statsEntry.getValue());
+
+                            MetricData metricData = new MetricData();
+                            metricData.setStats(statsEntry.getValue());
+                            metricData.setName(statsEntry.getKey() + "|" + metrics.get("name"));
+                            metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
+                            metricData.setMetricType(metrics.get("metricType"));
+
+                            metricStats.add(metricData);
+                        }
+                    }
+                }
+            }
+        }else{
+            logger.error("No stats found for: " + metricName);
+        }
+        return metricStats;
     }
 
     public boolean isDiskIncluded(String line, List<String> diskIncludes) {
