@@ -29,6 +29,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,7 +122,7 @@ public class Stats {
 
             @Override
             boolean isBase(String[] stats) {
-                return false;
+                return true;
             }
 
             @Override
@@ -164,49 +165,49 @@ public class Stats {
 
     public List<MetricData> getDiskUsage() {
         BufferedReader reader;
+        Map<String, Object> stats = new HashMap<String, Object>();
         try {
             Process process = Runtime.getRuntime().exec(DISK_USAGE_CMD);
             process.waitFor();
             reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+
+            FileParser parser = new FileParser(reader, "disk usage", null);
+
+            String[] diskUsageStats = generateStatsArray("diskUsageStats");
+
+            FileParser.StatParser statParser = new FileParser.StatParser(diskUsageStats, SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return !line.startsWith("Filesystem") && !line.startsWith("none");
+                }
+
+                @Override
+                boolean isBase(String[] stats) {
+                    return true;
+                }
+
+                @Override
+                boolean isCountRequired() {
+                    return false;
+                }
+            };
+            parser.addParser(statParser);
+            stats = parser.getStats();
+            // Check, if use % metrics is already being created, then remove this code piece
+            /*
+            for (Map.Entry<String, Object> diskStats : stats.entrySet()) {
+                Map<String, Object> diskStat = (Map) diskStats.getValue();
+                String capacityValue = (String) diskStat.get("use %");
+                diskStat.put("use %", capacityValue.replace("%", "").trim());
+            }*/
         } catch (IOException e) {
             logger.error("Failed to run '" + DISK_USAGE_CMD + "' for disk usage");
-            return null;
-        } catch (InterruptedException e) {
-            logger.error("Failed to run '" + DISK_USAGE_CMD + "' for disk usage");
-            return null;
+        } catch (Exception e) {
+            logger.error("Exception occurred collecting disk usage metrics", e);
         }
 
-        FileParser parser = new FileParser(reader, "disk usage", null);
-
-        String[] diskUsageStats = generateStatsArray("diskUsageStats");
-
-        FileParser.StatParser statParser = new FileParser.StatParser(diskUsageStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return !line.startsWith("Filesystem") && !line.startsWith("none");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return false;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(statParser);
-
-        // Check, if use % metrics is already being created, then remove this code piece
-        Map<String, Object> stats = parser.getStats();
-        for (Map.Entry<String, Object> diskStats : stats.entrySet()) {
-            Map<String, Object> diskStat = (Map) diskStats.getValue();
-            String capacityValue = (String) diskStat.get("use %");
-            diskStat.put("use %", capacityValue.replace("%", "").trim());
-        }
-
-        return generateStatsMap(parser.getStats(), "diskUsageStats");
+        return generateStatsMap(stats, "diskUsageStats");
     }
 
     public List<MetricData> getFileStats() {
@@ -216,82 +217,85 @@ public class Stats {
 
         List<MetricData> statsMetrics = new ArrayList<MetricData>();
 
-        String[] fileNRStats = generateStatsArray("fileNRStats");
-        FileParser parser = new FileParser(fhReader, "file handler", null);
-        FileParser.StatParser statParser = new FileParser.StatParser(fileNRStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return true;
+        try {
+            String[] fileNRStats = generateStatsArray("fileNRStats");
+            FileParser parser = new FileParser(fhReader, "file handler", null);
+            FileParser.StatParser statParser = new FileParser.StatParser(fileNRStats, SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return true;
+                }
+
+                @Override
+                boolean isBase(String[] stats) {
+                    return true;
+                }
+
+                @Override
+                boolean isCountRequired() {
+                    return false;
+                }
+            };
+            parser.addParser(statParser);
+            List<MetricData> metrics = generateStatsMap(parser.getStats(), "fileNRStats");
+            if (metrics != null) {
+                statsMetrics.addAll(metrics);
             }
 
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
+            String[] inodeNRStats = generateStatsArray("inodeNRStats");
+
+            parser = new FileParser(inodeReader, "inode", null);
+            statParser = new FileParser.StatParser(inodeNRStats, SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return true;
+                }
+
+                @Override
+                boolean isBase(String[] stats) {
+                    return true;
+                }
+
+                @Override
+                boolean isCountRequired() {
+                    return false;
+                }
+            };
+            parser.addParser(statParser);
+
+            metrics = generateStatsMap(parser.getStats(), "iNodeNRStats");
+            if (metrics != null) {
+                statsMetrics.addAll(metrics);
             }
 
-            @Override
-            boolean isCountRequired() {
-                return false;
+
+            String[] dentriesStats = generateStatsArray("dentriesStats");
+
+            parser = new FileParser(dentriesReader, "dcache", null);
+            statParser = new FileParser.StatParser(dentriesStats, SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return true;
+                }
+
+                @Override
+                boolean isBase(String[] stats) {
+                    return true;
+                }
+
+                @Override
+                boolean isCountRequired() {
+                    return false;
+                }
+            };
+            parser.addParser(statParser);
+            metrics = generateStatsMap(parser.getStats(), "dentriesStats");
+            if (metrics != null) {
+                statsMetrics.addAll(metrics);
             }
-        };
-        parser.addParser(statParser);
-        List< MetricData> metrics = generateStatsMap(parser.getStats(),"fileNRStats");
-        if (metrics != null) {
-            statsMetrics.addAll(metrics);
+        }catch(Exception e) {
+            logger.error("Exception collection metrics for file: ", e);
         }
-
-        String[] inodeNRStats = generateStatsArray("inodeNRStats");
-
-        parser = new FileParser(inodeReader, "inode", null);
-        statParser = new FileParser.StatParser(inodeNRStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return true;
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(statParser);
-
-        metrics = generateStatsMap(parser.getStats(),"iNodeNRStats");
-        if (metrics != null) {
-            statsMetrics.addAll(metrics);
-        }
-
-
-        String[] dentriesStats = generateStatsArray("dentriesStats");
-
-        parser = new FileParser(dentriesReader, "dcache", null);
-        statParser = new FileParser.StatParser(dentriesStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return true;
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(statParser);
-        metrics = generateStatsMap(parser.getStats(),"dentriesStats");
-        if (metrics != null) {
-            statsMetrics.addAll(metrics);
-        }
-
         return statsMetrics;
     }
 
@@ -476,6 +480,7 @@ public class Stats {
         String[] udpInuseStats = generateStatsArray("udpInuseStats");
         String[] rawInuseStats = generateStatsArray("rawInuseStats");
         String[] ipfragStats = generateStatsArray("ipfragStats");
+
         FileParser parser = new FileParser(reader, "socket", null);
         FileParser.StatParser sockParser = new FileParser.StatParser(sockUsedStats, SPACE_REGEX) {
             @Override
@@ -496,6 +501,8 @@ public class Stats {
         parser.addParser(sockParser);
         metricStats.addAll(generateStatsMap(parser.getStats(),"sockUsedStats"));
 
+        reader = getStream(SOCK_STAT_PATH);
+        parser = new FileParser(reader, "socket", null);
         FileParser.StatParser tcpParser = new FileParser.StatParser(tcpInuseStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -515,6 +522,8 @@ public class Stats {
         parser.addParser(tcpParser);
         metricStats.addAll(generateStatsMap(parser.getStats(),"tcpInuseStats"));
 
+        reader = getStream(SOCK_STAT_PATH);
+        parser = new FileParser(reader, "socket", null);
         FileParser.StatParser udpParser = new FileParser.StatParser(udpInuseStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -534,6 +543,8 @@ public class Stats {
         parser.addParser(udpParser);
         metricStats.addAll(generateStatsMap(parser.getStats(),"udpInuseStats"));
 
+        reader = getStream(SOCK_STAT_PATH);
+        parser = new FileParser(reader, "socket", null);
         FileParser.StatParser rawParser = new FileParser.StatParser(rawInuseStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -553,6 +564,8 @@ public class Stats {
         parser.addParser(rawParser);
         metricStats.addAll(generateStatsMap(parser.getStats(),"rawInuseStats"));
 
+        reader = getStream(SOCK_STAT_PATH);
+        parser = new FileParser(reader, "socket", null);
         FileParser.StatParser ipfragParser = new FileParser.StatParser(ipfragStats, SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
@@ -679,25 +692,22 @@ public class Stats {
         for(Map<String,String> metricsEntry: allMetricsFromConfig.get(metricName)){
             stats[index++] = metricsEntry.get("name");
         }
-        return stats;
+        return Arrays.stream(stats)
+                .filter(s -> (s != null && s.length() > 0))
+                .toArray(String[]::new);
     }
 
     protected static List<MetricData> generateStatsMap(Map<String, Object> statsMap, String metricName){
 
         List<MetricData> metricStats = new ArrayList<MetricData>();
         if(statsMap!=null) {
-            logger.debug("Generating Stats Map for metric: " + metricName);
-
             for (Map.Entry<String, Object> statsEntry : statsMap.entrySet()) {
                 List<Map<String, String>> metricConfig = allMetricsFromConfig.get(metricName);
                 if(metricConfig!=null) {
 
                     for (Map<String, String> metrics : metricConfig) {
 
-                        if (metrics != null && metrics.get("name").equalsIgnoreCase(statsEntry.getKey())) {
-
-                            logger.debug("Adding stats for the entry: " + metrics.get("name") + " with value: " + statsEntry.getValue());
-
+                         if (metrics != null && metrics.get("name").equalsIgnoreCase(statsEntry.getKey())) {
                             MetricData metricData = new MetricData();
                             metricData.setStats(statsEntry.getValue());
                             metricData.setName(metrics.get("name"));
@@ -706,10 +716,7 @@ public class Stats {
 
                             metricStats.add(metricData);
                         }
-
                         if (metricName.equalsIgnoreCase("mountedNFSStatus")) {
-
-                            logger.debug("Adding stats for the entry: " + metrics.get("name") + " with value: " + statsEntry.getValue());
 
                             MetricData metricData = new MetricData();
                             metricData.setStats(statsEntry.getValue());
@@ -725,6 +732,7 @@ public class Stats {
         }else{
             logger.error("No stats found for: " + metricName);
         }
+
         return metricStats;
     }
 

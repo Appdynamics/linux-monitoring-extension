@@ -70,7 +70,7 @@ public class LinuxMonitorTest {
     @Test
     public void testNFSMountStatusProcessor() {
         NFSMountStatusProcessor processor = new NFSMountStatusProcessor();
-        Assert.assertEquals(processor.execute("/dev/disk1").trim(), "1");
+        Assert.assertEquals(processor.execute("/dev/disk1").trim(), "3");
 
     }
 

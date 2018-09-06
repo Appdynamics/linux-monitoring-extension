@@ -87,6 +87,7 @@ public class LinuxMonitoringTask implements Runnable{
         if ((list = stats.getSockStats()) != null) {
             statsMap.put("socket", list);
         }
+
         MountedNFS[] mountedNFS = config.getMountedNFS();
         if(mountedNFS != null) { //Null check to MountedNFS
             List<MetricData> nfsStats = new ArrayList<MetricData>();
@@ -112,20 +113,24 @@ public class LinuxMonitoringTask implements Runnable{
 
             List<MetricData> val = (ArrayList)entry.getValue();
             for(MetricData metricData: val) {
-                if(metricData.isCollectDelta()){
-                    String metricVal = MetricUtils.toWholeNumberString(metricData.getStats());
-                    BigDecimal deltaMetricValue = deltaCalculator.calculateDelta(metricPath, new BigDecimal(metricVal));
-                    printMetric(metricPath + key + "|" +metricData.getName() + " Delta", deltaMetricValue != null ? deltaMetricValue.toBigInteger() : new BigInteger("0"), metricData.getMetricType());
+                try {
+                    if (metricData.isCollectDelta()) {
+                        String metricVal = MetricUtils.toWholeNumberString(metricData.getStats());
+                        BigDecimal deltaMetricValue = deltaCalculator.calculateDelta(metricPath, new BigDecimal(metricVal));
+                        printMetric(metricPath + key + "|" + metricData.getName() + " Delta", deltaMetricValue != null ? deltaMetricValue.toBigInteger() : new BigInteger("0"), metricData.getMetricType());
 
-                }
-                printMetric(metricPath + key + "|" +metricData.getName(), metricData.getStats(), metricData.getMetricType());
-
-                // compute Avg IO utilization using metric in diskstats
-                if ("time spent doing I/Os (ms)".equals(key)) {
-                    Long[] prevValues = processDelta(metricPath, metricData.getStats());
-                    if (prevValues[0] != null) {
-                        printMetric(metricPath + "Avg I/O Utilization %", getDeltaValue(val, prevValues), metricData.getMetricType());
                     }
+                    printMetric(metricPath + key + "|" + metricData.getName(), metricData.getStats(), metricData.getMetricType());
+
+                    // compute Avg IO utilization using metric in diskstats
+                    if ("time spent doing I/Os (ms)".equals(key)) {
+                        Long[] prevValues = processDelta(metricPath, metricData.getStats());
+                        if (prevValues[0] != null) {
+                            printMetric(metricPath + "Avg I/O Utilization %", getDeltaValue(val, prevValues), metricData.getMetricType());
+                        }
+                    }
+                } catch(Exception e) {
+                    logger.error("Exception printing metric: " + metricPath + key + "|" + metricData.getName() + " with value: " + metricData.getStats().toString(), e );
                 }
             }
         }

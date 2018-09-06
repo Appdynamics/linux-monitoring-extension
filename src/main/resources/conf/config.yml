@@ -15,9 +15,6 @@ diskIncludes: ["*"]
 metrics:
      #Items in Nodes|<node>|Messages - data looked up from /api/channels
    - cpuStats:
-         - name: "user"
-           metricType: "OBS.CUR.COL"
-           collectDelta: "false"
          - name: "nice"
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
