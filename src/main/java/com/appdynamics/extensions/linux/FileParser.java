@@ -7,6 +7,8 @@
 
 package com.appdynamics.extensions.linux;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -23,7 +25,7 @@ public class FileParser {
     private String countMetric;
     private List<StatParser> parserList = new ArrayList<StatParser>();
 
-    private Logger logger  = Logger.getLogger(FileParser.class);;
+    private Logger logger  = Logger.getLogger(FileParser.class);
 
     public FileParser(BufferedReader reader, String description, String countMetric) {
         this.reader = reader;
@@ -39,10 +41,9 @@ public class FileParser {
         Map<String, Object> statsMap = null;
         int count = 0;
         if (reader == null) {
-            logError();
+            logger.error("Failed to read " + description + " stats as reader is null");
         } else {
             statsMap = new HashMap<String, Object>();
-
             try {
                 try {
                     String line;
@@ -51,9 +52,14 @@ public class FileParser {
                         for (StatParser parser : parserList) {
                             if (parser.isMatchType(line)) {
                                 String[] stats = line.split(parser.regex);
+
+                                if(!StringUtils.isNumeric(stats[0])){
+                                    stats = ArrayUtils.removeElement(stats, stats[0]);
+                                }
                                 Map<String, String> map = getStatMap(parser.keys, stats);
+
                                 String name = map.remove(Stats.IDENTIFIER);
-                                if (parser.isBase(stats)) {
+                                if (parser.isBase(line.split(parser.regex))) {
                                     statsMap.putAll(map);   //put in base dir
                                 } else if (name != null) {
                                     if(parser.isCountRequired()) {
@@ -69,17 +75,18 @@ public class FileParser {
                     if(countMetric != null) {
                         statsMap.put(countMetric, Long.valueOf(count));
                     }
+                }catch (Exception e) {
+                    logger.error("Failed to read " + description + " stats", e);
                 } finally {
                     reader.close();
                 }
             } catch (IOException e) {
-                logError();
+                logger.error("Failed to read " + description + " stats IOException", e);
             }
             if (statsMap.size() == 0) {
                 statsMap = null;
             }
         }
-
         return statsMap;
     }
 
@@ -91,7 +98,7 @@ public class FileParser {
         return map;
     }
 
-    public void logError() {
+    public void logError(Exception e) {
         logger.error("Failed to read " + description + " stats");
     }
 
