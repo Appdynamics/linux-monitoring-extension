@@ -100,17 +100,12 @@ public class NFSMountMetricsTask implements Runnable {
         Runtime rt = Runtime.getRuntime();
         Process p = null;
         BufferedReader input = null;
-        String formattedCommand = "";
+        String formattedCommand ;
         try {
             formattedCommand = String.format(command[0], fileSystem);
             p = rt.exec(new String[]{"bash", "-c", formattedCommand});
             input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            /*String line;
-            if ((line = input.readLine()) != null) {
 
-                logger.debug("NFS mount output for "+ fileSystem + " is: " + line);
-                return line;
-            }*/
 
             FileParser parser = new FileParser(input, "mountedNFSStatus", null);
 
@@ -138,13 +133,7 @@ public class NFSMountMetricsTask implements Runnable {
                 }
             };
             parser.addParser(statParser);
-            // Check, if use % metrics is already being created, then remove this code piece
-            /*
-            for (Map.Entry<String, Object> diskStats : stats.entrySet()) {
-                Map<String, Object> diskStat = (Map) diskStats.getValue();
-                String capacityValue = (String) diskStat.get("use %");
-                diskStat.put("use %", capacityValue.replace("%", "").trim());
-            }*/
+
             Map<String, Object> parserStats = parser.getStats();
             for(Map.Entry entry:  parserStats.entrySet()){
                 logger.debug("Key: " + entry.getKey() + " Value: " + entry.getValue());

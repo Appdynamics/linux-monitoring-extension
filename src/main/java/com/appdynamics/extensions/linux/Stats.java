@@ -181,13 +181,7 @@ public class Stats {
             };
             parser.addParser(statParser);
             stats = parser.getStats();
-            // Check, if use % metrics is already being created, then remove this code piece
-            /*
-            for (Map.Entry<String, Object> diskStats : stats.entrySet()) {
-                Map<String, Object> diskStat = (Map) diskStats.getValue();
-                String capacityValue = (String) diskStat.get("use %");
-                diskStat.put("use %", capacityValue.replace("%", "").trim());
-            }*/
+
         } catch (IOException e) {
             logger.error("Failed to run '" + Commands.DISK_USAGE_CMD + "' for disk usage");
         } catch (Exception e) {
@@ -707,13 +701,6 @@ public class Stats {
             List<MetricData> val = (ArrayList)entry.getValue();
             for(MetricData metricData: val) {
                 try {
-                    /* Remove this code as 2.0 commons handles delta
-                    if (metricData.isCollectDelta()) {
-                        String metricVal = MetricUtils.toWholeNumberString(metricData.getStats());
-                        BigDecimal deltaMetricValue = deltaCalculator.calculateDelta(metricPath, new BigDecimal(metricVal));
-                        printMetric(metricPath + key + "|" + metricData.getName() + " Delta", deltaMetricValue != null ? deltaMetricValue.toBigInteger() : new BigInteger("0"), metricData.getMetricType());
-
-                    }*/
                     logger.debug("Printing metric " + metricData.getName() + " with path: " + metricPath+"|"+key);
                     metrics.add(new Metric(metricData.getName(), replaceCharacter(metricData.getStats().toString()), metricPath + "|" + key + "|" + metricData.getName(), metricData.getPropertiesMap()));
 
