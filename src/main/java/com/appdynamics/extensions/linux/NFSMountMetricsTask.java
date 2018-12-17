@@ -35,7 +35,6 @@ public class NFSMountMetricsTask implements Runnable {
 
     private static final String SPACE_REGEX = "[\t ]+";
 
-
     private MonitorContextConfiguration configuration;
 
     private String metricPrefix;
@@ -54,7 +53,6 @@ public class NFSMountMetricsTask implements Runnable {
     }
 
     public void run() {
-        //Configuration config = YmlReader.readFromFile(configuration.getConfigYml().);
         try {
             List<MetricData> list;
 
