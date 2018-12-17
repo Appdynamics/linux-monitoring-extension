@@ -7,51 +7,44 @@
 
 package com.appdynamics.extensions.linux;
 
-import com.appdynamics.extensions.conf.MonitorConfiguration;
-import com.appdynamics.extensions.util.DeltaMetricsCalculator;
-import com.appdynamics.extensions.util.MetricWriteHelper;
-import com.appdynamics.extensions.util.MetricWriteHelperFactory;
-import com.google.common.base.Strings;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
-import com.singularity.ee.agent.systemagent.api.TaskExecutionContext;
-import com.singularity.ee.agent.systemagent.api.TaskOutput;
+import com.appdynamics.extensions.ABaseMonitor;
+import com.appdynamics.extensions.TasksExecutionServiceProvider;
 import com.singularity.ee.agent.systemagent.api.exception.TaskExecutionException;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
-import java.io.OutputStreamWriter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 
-public class LinuxMonitor extends AManagedMonitor {
-
-    private static Logger logger = Logger.getLogger(LinuxMonitor.class);
-
-    public static final String DEFAULT_METRIC_PREFIX = "Custom Metrics|LinuxMonitor|";
-
-    private String metricPrefix = DEFAULT_METRIC_PREFIX;
-
-    private MonitorConfiguration configuration;
-    private String configFileName;
-
-    private Cache<String, Long> prevMetricsMap;
-
-    private boolean initialized;
-
-    private final DeltaMetricsCalculator deltaCalculator = new DeltaMetricsCalculator(10);
+public class LinuxMonitor extends ABaseMonitor {
 
 
-    public LinuxMonitor() {
-        logger.info("Using Monitor Version [" + getImplementationVersion() + "]");
-        prevMetricsMap = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).build();
+    private static final String METRIC_PREFIX = "Custom Metrics|Linux Monitor";
+
+    @Override
+    protected String getDefaultMetricPrefix() {
+        return METRIC_PREFIX;
     }
 
+    @Override
+    public String getMonitorName() {
+        return "Linux Monitor";
+    }
+
+
+    @Override
+    protected void doRun(TasksExecutionServiceProvider serviceProvider) {
+
+        LinuxMonitorTask task = new LinuxMonitorTask(serviceProvider, this.getContextConfiguration());
+        serviceProvider.submit("LinuxMonitor", task);
+    }
+
+
+    @Override
+    protected int getTaskCount() {
+        // Always run on only 1 machine.
+        return 1;
+    }
+
+/*
     private void configure(Map<String, String> argsMap) {
         logger.info("Initializing the Linux Configuration");
         MetricWriteHelper metricWriteHelper = MetricWriteHelperFactory.create(this);
@@ -76,7 +69,7 @@ public class LinuxMonitor extends AManagedMonitor {
         public void run() {
             Map<String, ?> config = configuration.getConfigYml();
             if(config!=null){
-                    configuration.getExecutorService().execute(new LinuxMonitoringTask(configuration, metricPrefix,configFileName,prevMetricsMap, deltaCalculator));
+                    configuration.getExecutorService().execute(new LinuxMetricsTask(configuration, metricPrefix,configFileName,prevMetricsMap, deltaCalculator));
             }
             else{
                 logger.error("Configuration not found");
@@ -115,10 +108,11 @@ public class LinuxMonitor extends AManagedMonitor {
         return LinuxMonitor.class.getPackage().getImplementationTitle();
     }
 
+*/
 
     public static void main(String[] args) throws TaskExecutionException {
 
-        ConsoleAppender ca = new ConsoleAppender();
+      /*  ConsoleAppender ca = new ConsoleAppender();
         ca.setWriter(new OutputStreamWriter(System.out));
         ca.setLayout(new PatternLayout("%-5p [%t]: %m%n"));
         ca.setThreshold(Level.DEBUG);
@@ -126,7 +120,19 @@ public class LinuxMonitor extends AManagedMonitor {
         LinuxMonitor monitor = new LinuxMonitor();
 
         final Map<String, String> taskArgs = new HashMap<String, String>();
-        taskArgs.put("config-file", "/Users/akshay.srivastava/AppDynamics/extensions/linux-monitoring-extension/src/main/resources/conf/config.yml");
+        taskArgs.put("config-file", "/Users/akshay.srivastava/AppDynamics/extensions/linux-monitoring-extension/src/main/resources/conf/config.yml");*/
+
+
+        String line ="TCP: inuse 8 orphan 0 tw 0 alloc 15 mem 0";
+        String[] stats = line.split("[\t ]+");
+        //for(int i=0; i<=1; i++) {
+            while(!StringUtils.isNumeric(stats[0])) {
+                stats = ArrayUtils.removeElement(stats, stats[0]);
+            }
+       // }
+        for(int i=0;i<stats.length;i++){
+            System.out.println(stats[i]);
+        }
 
     }
 

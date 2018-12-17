@@ -53,12 +53,12 @@ public class FileParser {
                             if (parser.isMatchType(line)) {
                                 String[] stats = line.split(parser.regex);
 
-                                if(!StringUtils.isNumeric(stats[0])){
+                                while(!StringUtils.isNumeric(stats[0])) {
                                     stats = ArrayUtils.removeElement(stats, stats[0]);
                                 }
                                 Map<String, String> map = getStatMap(parser.keys, stats);
 
-                                String name = map.remove(Stats.IDENTIFIER);
+                                String name = map.remove(Commands.IDENTIFIER);
                                 if (parser.isBase(line.split(parser.regex))) {
                                     statsMap.putAll(map);   //put in base dir
                                 } else if (name != null) {

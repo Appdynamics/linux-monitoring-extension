@@ -1,3 +1,9 @@
+# This will create this metric in all the tiers, under this path
+#metricPrefix: "Custom Metrics|Linux|"
+
+# This will create it in specific Tier. Replace <ComponentID>
+# (https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java)
+metricPrefix: "Server|Component:<ComponentID>|Custom Metrics|Linux|"
 
 # An availability status for NFS mounts is reported by executing the command `df | grep <fileSystem> | wc -l`.
 # displayName: the name with which the metric is reported in AppD Metric Browser. If empty, metric is reported with fileSystem as its name.
@@ -10,7 +16,13 @@ mountedNFS:
 # ["sda.*", "ram1", "loop0"]
 diskIncludes: ["*"]
 
+# Replaces characters in metric name with the specified characters.
+# "replace" takes any regular expression
+# "replaceWith" takes the string to replace the matched characters
 
+metricCharacterReplacer:
+  - replace: "%"
+    replaceWith: ""
 
 metrics:
      #Items in Nodes|<node>|Messages - data looked up from /api/channels
@@ -332,23 +344,50 @@ metrics:
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
    - mountedNFSStatus:
-         - name: "disk free space"
+         - name: "size (MB)"
+           metricType: "OBS.CUR.COL"
+           collectDelta: "false"
+         - name: "used (MB)"
+           metricType: "OBS.CUR.COL"
+           collectDelta: "false"
+         - name: "available (MB)"
+           metricType: "OBS.CUR.COL"
+           collectDelta: "false"
+         - name: "use %"
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
    - nfsIOStats:
-         - name: "tps"
+         - name: "rkB_nor/s"
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
-         - name: "kB_read/s"
+           multiplier: "100"
+         - name: "WkB_nor/s"
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
-         - name: "kb_wrtn/s"
+           multiplier: "100"
+         - name: "rkB_dir/s"
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
-         - name: "kB_read"
+           multiplier: "100"
+         - name: "WkB_dir/s"
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
-         - name: "kb_wrtn"
+           multiplier: "100"
+         - name: "rkB_svr/s"
+           metricType: "OBS.CUR.COL"
+           collectDelta: "false"
+           multiplier: "100"
+         - name: "WkB_svr/s"
+           metricType: "OBS.CUR.COL"
+           collectDelta: "false"
+           multiplier: "100"
+         - name: "ops/s"
+           metricType: "OBS.CUR.COL"
+           collectDelta: "false"
+         - name: "rops/s"
+           metricType: "OBS.CUR.COL"
+           collectDelta: "false"
+         - name: "wops/s"
            metricType: "OBS.CUR.COL"
            collectDelta: "false"
 
@@ -356,9 +395,14 @@ metrics:
 numberOfThreads: 5
 
 
-# This will create this metric in all the tiers, under this path
-#metricPrefix: "Custom Metrics|Linux|"
-
-# This will create it in specific Tier. Replace <ComponentID>
-# (https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java)
-metricPrefix: "Server|Component:<ComponentID>|Custom Metrics|Linux|"
+#Files used by the extension to fetch monitoring data
+# /proc/stat
+# /proc/net/dev
+# /proc/diskstats
+# /proc/meminfo
+# /proc/sys/fs/file-nr
+# /proc/sys/fs/inode-nr
+# /proc/sys/fs/dentry-state
+# /proc/loadavg
+# /proc/vmstat
+# proc/net/sockstat
