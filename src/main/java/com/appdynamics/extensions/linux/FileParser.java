@@ -7,16 +7,18 @@
 
 package com.appdynamics.extensions.linux;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 
 public class FileParser {
@@ -44,6 +46,7 @@ public class FileParser {
             logger.error("Failed to read " + description + " stats as reader is null");
         } else {
             statsMap = new HashMap<String, Object>();
+            Pattern pattern = Pattern.compile("^([0-9])");
             try {
                 try {
                     String line;
@@ -51,10 +54,13 @@ public class FileParser {
                         line = line.trim();
                         for (StatParser parser : parserList) {
                             if (parser.isMatchType(line)) {
-                                String[] stats = line.split(parser.regex);
+                                List<String> stats = new LinkedList<>(Arrays.asList(line.split(parser.regex)));
 
-                                while(!StringUtils.isNumeric(stats[0])) {
-                                    stats = ArrayUtils.removeElement(stats, stats[0]);
+                                ListIterator<String> iter = stats.listIterator();
+                                while(iter.hasNext()){
+                                    if(!(pattern.matcher(iter.next()).find())){
+                                        iter.remove();
+                                    }
                                 }
                                 Map<String, String> map = getStatMap(parser.keys, stats);
 
@@ -90,16 +96,12 @@ public class FileParser {
         return statsMap;
     }
 
-    private Map<String, String> getStatMap(String[] keys, String[] vals) {
+    private Map<String, String> getStatMap(String[] keys, List<String> vals) {
         Map<String, String> map = new HashMap<String, String>();
-        for (int i = 0; i < vals.length && i < keys.length; i++) {
-            map.put(keys[i], vals[i]);
+        for (int i = 0; i < vals.size() && i < keys.length; i++) {
+            map.put(keys[i], vals.get(i));
         }
         return map;
-    }
-
-    public void logError(Exception e) {
-        logger.error("Failed to read " + description + " stats");
     }
 
     public abstract static class StatParser {

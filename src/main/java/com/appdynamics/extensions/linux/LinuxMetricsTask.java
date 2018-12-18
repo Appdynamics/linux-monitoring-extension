@@ -9,11 +9,9 @@ package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
-import com.appdynamics.extensions.metrics.Metric;
 import org.apache.log4j.Logger;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,8 +32,6 @@ public class LinuxMetricsTask implements Runnable {
 
     private Phaser phaser;
 
-    private List<Metric> metrics = new ArrayList<Metric>();
-
     private List<Map<String, String>> metricReplacer;
 
     public LinuxMetricsTask(String metricPrefix, MonitorContextConfiguration configuration, MetricWriteHelper metricWriteHelper, Phaser phaser, List<Map<String, String>> metricReplacer) {
@@ -48,9 +44,8 @@ public class LinuxMetricsTask implements Runnable {
     }
 
     public void run() {
-        //Configuration config = YmlReader.readFromFile(configuration.getConfigYml().);
         try {
-            //populateMetrics(configuration);
+
             Stats stats = new Stats((List<Map<String, List<Map<String, String>>>>) configuration.getConfigYml().get("metrics"), metricPrefix, metricWriteHelper, metricReplacer);
 
             logger.debug("Fetched stats from config");
@@ -103,36 +98,4 @@ public class LinuxMetricsTask implements Runnable {
             phaser.arriveAndDeregister();
         }
     }
-
-/*    private void printNestedMap(Map<String, Object> map, String metricPath) {
-
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            String key = entry.getKey();
-
-            List<MetricData> val = (ArrayList)entry.getValue();
-            for(MetricData metricData: val) {
-                try {
-                    *//* Remove this code as 2.0 commons handles delta
-                    if (metricData.isCollectDelta()) {
-                        String metricVal = MetricUtils.toWholeNumberString(metricData.getStats());
-                        BigDecimal deltaMetricValue = deltaCalculator.calculateDelta(metricPath, new BigDecimal(metricVal));
-                        printMetric(metricPath + key + "|" + metricData.getName() + " Delta", deltaMetricValue != null ? deltaMetricValue.toBigInteger() : new BigInteger("0"), metricData.getMetricType());
-
-                    }*//*
-                    metrics.add(new Metric(metricData.getName(), metricData.getStats().toString(), metricPath + "|" + key, metricData.getPropertiesMap()));
-
-                    // compute Avg IO utilization using metric in diskstats
-                    if ("time spent doing I/Os (ms)".equals(key)) {
-                        metrics.add(new Metric(metricData.getName(), metricData.getStats().toString(), metricPath + "|" + "Avg I/O Utilization %", metricData.getPropertiesMap()));
-                    }
-                } catch(Exception e) {
-                    logger.error("Exception printing metric: " + metricPath + key + "|" + metricData.getName() + " with value: " + metricData.getStats().toString(), e );
-                }
-            }
-        }
-        logger.debug("Number of metrics reporting: " + metrics.size());
-        if (metrics != null && metrics.size() > 0) {
-            metricWriteHelper.transformAndPrintMetrics(metrics);
-        }
-    }*/
 }

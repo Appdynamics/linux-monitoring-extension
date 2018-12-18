@@ -1,5 +1,5 @@
 /*
- * Copyright 2018. AppDynamics LLC and its affiliates.
+ * Copyright 2018. AppDynamics LLC and its `filiates.
  * All Rights Reserved.
  * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
  * The copyright notice above does not evidence any actual or intended publication of such source code.
@@ -653,17 +653,6 @@ public class Stats {
 
                             metricStats.add(metricData);
                         }
-                        /*if (metricName.equalsIgnoreCase("mountedNFSStatus")) {
-
-                            MetricData metricData = new MetricData();
-                            metricData.setStats(statsEntry.getValue());
-                            metricData.setName(metrics.get("name"));
-                            metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
-                            metricData.setMetricType(metrics.get("metricType"));
-                            metricData.constructProperties();
-
-                            metricStats.add(metricData);
-                        }*/
                     }
                 }
             }
