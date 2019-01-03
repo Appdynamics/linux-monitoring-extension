@@ -1,9 +1,9 @@
 # This will create this metric in all the tiers, under this path
-#metricPrefix: "Custom Metrics|Linux|"
+#metricPrefix: "Custom Metrics|Linux Monitor|"
 
 # This will create it in specific Tier. Replace <ComponentID>
 # (https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java)
-metricPrefix: "Server|Component:<ComponentID>|Custom Metrics|Linux|"
+metricPrefix: "Server|Component:<ComponentID>|Custom Metrics|Linux Monitor|"
 
 # An availability status for NFS mounts is reported by executing the command `df | grep <fileSystem> | wc -l`.
 # displayName: the name with which the metric is reported in AppD Metric Browser. If empty, metric is reported with fileSystem as its name.
@@ -14,7 +14,9 @@ mountedNFS:
 # "diskIncludes" to fetch disk statistics only for the configured.
 # Ex: ["*"] fetches all disks
 # ["sda.*", "ram1", "loop0"]
-diskIncludes: ["*"]
+filters:
+  diskIncludes: [".*"]
+  cpuIncludes: [".*"]
 
 # Replaces characters in metric name with the specified characters.
 # "replace" takes any regular expression
@@ -394,6 +396,11 @@ metrics:
 # number of concurrent tasks
 numberOfThreads: 5
 
+derivedMetrics:
+    - derivedMetricPath: "{x}|diskStats|I/O ops per sec"
+      formula: "({x}|diskStats|reads completed successfully + {x}|diskStats|writes completed)/60"
+      collectDelta: "true"
+      metricType: "OBS.AVG.COL"
 
 #Files used by the extension to fetch monitoring data
 # /proc/stat

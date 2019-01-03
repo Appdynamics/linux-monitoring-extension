@@ -52,48 +52,28 @@ public class LinuxMetricsTask implements Runnable {
             Map<String, Object> statsMap = new HashMap<String, Object>();
             List<MetricData> list;
 
-            if ((list = stats.getDiskStats((List<String>)configuration.getConfigYml().get("diskIncludes"))) != null) {
-                statsMap.put("disk", list);
-            }
+            Map<String, List<String>> filtersMap = (Map<String, List<String>>) configuration.getConfigYml().get("filters");
 
-            if ((list = stats.getCPUStats()) != null) {
-                statsMap.put("CPU", list);
-            }
-
-            if ((list = stats.getDiskUsage()) != null) {
-                statsMap.put("disk usage", list);
-            }
-            if ((list = stats.getFileStats()) != null) {
-                statsMap.put("file", list);
-            }
-            if ((list = stats.getLoadStats()) != null) {
-                statsMap.put("load average", list);
-            }
-            if ((list = stats.getMemStats()) != null) {
-                statsMap.put("memory", list);
-            }
-            if ((list = stats.getNetStats()) != null) {
-                statsMap.put("network", list);
-            }
-            if ((list = stats.getPageSwapStats()) != null) {
-                statsMap.put("page", list);
-            }
-            if ((list = stats.getProcStats()) != null) {
-                statsMap.put("process", list);
-            }
-            if ((list = stats.getSockStats()) != null) {
-                statsMap.put("socket", list);
-            }
+            statsMap.put("disk", stats.getDiskStats(filtersMap.get("diskIncludes")));
+            statsMap.put("CPU", stats.getCPUStats(filtersMap.get("cpuIncludes")));
+            statsMap.put("disk usage", stats.getDiskUsage());
+            statsMap.put("file", stats.getFileStats());
+            statsMap.put("load average", stats.getLoadStats());
+            statsMap.put("memory", stats.getMemStats());
+            statsMap.put("network", stats.getNetStats());
+            statsMap.put("page", stats.getPageSwapStats());
+            statsMap.put("process", stats.getProcStats());
+            statsMap.put("socket", stats.getSockStats());
 
             logger.debug("StatsMap size: " + statsMap.size());
 
             stats.printNestedMap(statsMap, metricPrefix);
 
-        }catch(Exception e){
+        } catch (Exception e) {
             logger.error("LinuxMetrics Task error: " + e.getMessage());
             metricWriteHelper.printMetric(metricPrefix + "|HeartBeat", BigDecimal.ZERO, "AVG.AVG.IND");
 
-        }finally {
+        } finally {
             logger.debug("Linux Metrics Task Phaser arrived ");
             phaser.arriveAndDeregister();
         }

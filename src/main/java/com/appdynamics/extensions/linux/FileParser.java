@@ -119,7 +119,9 @@ public class FileParser {
          * @param line a line from <code>reader</code>
          * @return true if parser should parse <code>line</code>, false otherwise
          */
-        abstract boolean isMatchType(String line);
+         boolean isMatchType(String line){
+             return true;
+         }
 
         /**
          * Whether current list of stats should be placed under base dir
@@ -127,13 +129,17 @@ public class FileParser {
          * @param stats array of stats from a line in <code>reader</code>
          * @return true if the stats should be placed under base dir, false if they're to be put in a sub dir
          */
-        abstract boolean isBase(String[] stats);
+         boolean isBase(String[] stats){
+             return true;
+         }
 
         /**
          * Condition to check if any of the metric in reader needs an increment to have a count metric
          * @return
          */
-        abstract boolean isCountRequired();
+         boolean isCountRequired(){
+             return false;
+         }
 
     }
 }

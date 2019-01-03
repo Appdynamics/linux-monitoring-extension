@@ -28,7 +28,7 @@ public class LinuxMonitorTask implements AMonitorTaskRunnable {
 
     public LinuxMonitorTask(TasksExecutionServiceProvider serviceProvider, MonitorContextConfiguration configuration) {
         this.configuration = configuration;
-        this.metricPrefix = configuration.getMetricPrefix() + "|" + "LinuxMonitor";
+        this.metricPrefix = configuration.getMetricPrefix();
         this.metricWriter = serviceProvider.getMetricWriteHelper();
         this.metricReplacer = (List<Map<String, String>>) configuration.getConfigYml().get("metricCharacterReplacer");
     }

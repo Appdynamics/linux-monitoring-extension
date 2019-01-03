@@ -8,7 +8,6 @@ package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
-import com.appdynamics.extensions.linux.config.MountedNFS;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -21,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.Phaser;
 
 /**
- * Created by balakrishnav on 19/10/15.
+ * Created by akshays
  */
 public class NFSMountMetricsTask implements Runnable {
 
@@ -29,7 +28,7 @@ public class NFSMountMetricsTask implements Runnable {
 
     private static String[] NFS_IO_FILE_STATS = {"rkB_nor/s", "WkB_nor/s", "rkB_dir/s", "WkB_dir/s", "rkB_svr/s", "WkB_svr/s", "ops/s", "rops/s", "wops/s"};
 
-    private String[] command = {"df | grep %s "};
+    private String[] command = {"df"};
 
     private String nfsIOStatsCmd = "nfsiostat";
 
@@ -58,69 +57,46 @@ public class NFSMountMetricsTask implements Runnable {
 
             logger.debug("Fetched stats from config");
             Map<String, Object> statsMap = new HashMap<String, Object>();
-            List<Map> nfsConfig = (List<Map>) configuration.getConfigYml().get("mountedNFS");
-            if (nfsConfig != null) { //Null check to MountedNFS
 
-                MountedNFS[] mountedNFS = new MountedNFS[nfsConfig.size()];
-                int i = 0;
-                for (Map configEntry : nfsConfig) {
-                    MountedNFS nfs = new MountedNFS();
-                    nfs.setDisplayName((String) configEntry.get("displayName"));
-                    nfs.setFileSystem((String) configEntry.get("fileSystem"));
-                    mountedNFS[i++] = nfs;
-                }
+            List<String> mountFilters = ((Map<String, List<String>>) configuration.getConfigYml().get("filters")).get("mountedNFS");
 
-                List<MetricData> nfsStats = new ArrayList<>();
-
-                if ((list = getMountStatus(mountedNFS)) != null) {
-                    statsMap.put("mountedNFSStats",list);
-                }
-
-                if ((list = getMountIOStats(mountedNFS)) != null) {
-                    statsMap.put("nfsIOStat",list);
-                }
-                //statsMap.put("mountedNFSStats", nfsStats);
-            } else {
-                logger.info("NFS mount is null");
+            if ((list = getMountStatus(mountFilters)) != null) {
+                statsMap.put("mountedNFSStats",list);
             }
+
+            if ((list = getMountIOStats(mountFilters)) != null) {
+                statsMap.put("nfsIOStat",list);
+            }
+
             logger.debug("StatsMap size: " + statsMap.size());
 
             stats.printNestedMap(statsMap, metricPrefix);
         }catch(Exception e){
             logger.debug("Error fetching NFS metrics: ", e);
         }finally {
-            logger.debug("Linux Metrics Task Phaser arrived ");
+            logger.debug("NFS Metrics Task Phaser arrived ");
             phaser.arriveAndDeregister();
         }
 
     }
 
-    public List<MetricData> execute(String fileSystem) {
+    public List<MetricData> getMountStatus(List<String> mountedNFSFilter) {
 
         Runtime rt = Runtime.getRuntime();
         Process p = null;
         BufferedReader input = null;
-        String formattedCommand ;
         try {
-            formattedCommand = String.format(command[0], fileSystem);
-            p = rt.exec(new String[]{"bash", "-c", formattedCommand});
+            p = rt.exec(new String[]{"bash", "-c", command[0]});
             input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
 
             FileParser parser = new FileParser(input, "mountedNFSStatus", null);
 
-            String[] diskUsageStats = stats.generateStatsArray("mountedNFSStatus");
+            String[] mountedNFSStats = stats.generateStatsArray("mountedNFSStatus");
 
-            logger.debug("In nfsmountedstats");
-            for(int i=0; i<diskUsageStats.length;i++){
-                logger.debug(diskUsageStats[i]);
-            }
 
-            FileParser.StatParser statParser = new FileParser.StatParser(diskUsageStats, SPACE_REGEX) {
+            FileParser.StatParser statParser = new FileParser.StatParser(mountedNFSStats, SPACE_REGEX) {
                 @Override
-                boolean isMatchType(String line) {
-                    return !line.startsWith("Filesystem") && !line.startsWith("none");
-                }
+                boolean isMatchType(String line) { return stats.isFiltered(line, mountedNFSFilter) || (!line.startsWith("Filesystem") && !line.startsWith("none")); }
 
                 @Override
                 boolean isBase(String[] stats) {
@@ -135,91 +111,56 @@ public class NFSMountMetricsTask implements Runnable {
             parser.addParser(statParser);
 
             Map<String, Object> parserStats = parser.getStats();
-            for(Map.Entry entry:  parserStats.entrySet()){
-                logger.debug("Key: " + entry.getKey() + " Value: " + entry.getValue());
-            }
 
             return stats.generateStatsMap(parserStats, "mountedNFSStatus");
         } catch (IOException e) {
-            logger.error("Failed to run " + " disk usage for NFS mount: " + fileSystem);
+            logger.error("Failed to run for NFS mount ", e);
         } catch (Exception e) {
-            logger.error("Exception occurred collecting disk usage metrics", e);
+            logger.error("Exception occurred collecting NFS metrics", e);
         }
 
         return new ArrayList<>();
     }
 
-    public Map<String, Object> getNFSMetrics(final MountedNFS fileSystem){
 
-            String formattedCommand = "";
 
-            Map<String, Object> statsMap = new HashMap<String, Object>();
-            try {
-                formattedCommand = String.format(nfsIOStatsCmd, fileSystem.getFileSystem());
+    public List<MetricData> getMountIOStats(List<String> mountedNFSFilter) {
 
-               List<String> processListOutput = CommandExecutor.execute(formattedCommand);
+        BufferedReader reader;
+        try {
+            Process process = Runtime.getRuntime().exec(nfsIOStatsCmd);
+            process.waitFor();
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-               logger.debug("IO stat command output: " + processListOutput.size());
-               for(String line: processListOutput){
-                   logger.debug("NFS output: " + line);
-                    if(line.contains(fileSystem.getFileSystem())) {
-                        String[] stats = line.trim().split(SPACE_REGEX);
-                        for (int i = 0; i < NFS_IO_FILE_STATS.length; i++) {
-                            statsMap.put(NFS_IO_FILE_STATS[i], stats[i+1]);
-                        }
-                    }
-                 }
+            FileParser parser = new FileParser(reader, "nfsIOStats", null);
 
-            } catch (Exception e) {
-                logger.error("Command ran '" + nfsIOStatsCmd + "' for nfsIOStats, exception occurred:" + e);
-            }
-            logger.debug("Size of NFS iostat statsMap is: " + statsMap.size());
-            return statsMap;
-        }
+            String[] mountedNFSStats = stats.generateStatsArray("nfsIOStats");
 
-    public List<MetricData> getMountStatus(MountedNFS[] mountedNFS) {
+            FileParser.StatParser statParser = new FileParser.StatParser(mountedNFSStats, SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) { return stats.isFiltered(line, mountedNFSFilter) || (!line.startsWith("Filesystem") && !line.startsWith("none")); }
 
-        logger.debug("Fetching mount stats");
-        List<MetricData> metrics = new ArrayList<>();
-        for (MountedNFS fileSystem : mountedNFS) {
-             metrics =  execute(fileSystem.getFileSystem());
-        }
-        return metrics;
-
-    }
-
-    public List<MetricData> getMountIOStats(MountedNFS[] mountedNFS) {
-        logger.debug("Fetching mountIO stats");
-        List<MetricData> ioStats = new ArrayList<MetricData>();
-
-        for (MountedNFS fileSystem : mountedNFS) {
-            Map<String,Object> statsMap = getNFSMetrics(fileSystem);
-
-            List<MetricData> metricStats = new ArrayList<MetricData>();
-
-            for(Map.Entry statsEntry : statsMap.entrySet()) {
-
-                logger.debug("NFS metric: " + String.valueOf(statsEntry.getKey()));
-                for (Map<String, String> metrics : Stats.allMetricsFromConfig.get("nfsIOStats")) {
-
-                    if (metrics.get("name").equalsIgnoreCase(String.valueOf(statsEntry.getKey()))) {
-
-                        MetricData metricData = new MetricData();
-                        metricData.setStats(statsEntry.getValue());
-                        metricData.setName(fileSystem.getDisplayName() + "|" + metrics.get("name"));
-                        metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
-                        metricData.setMultiplier(metrics.get("multiplier"));
-                        metricData.setMetricType(metrics.get("metricType"));
-                        metricData.constructProperties();
-
-                        metricStats.add(metricData);
-                        logger.debug("NFS Metric Data: " + metricData.getName() + ": " + metricData.getStats().toString());
-                    }
+                @Override
+                boolean isBase(String[] stats) {
+                    return true;
                 }
-            }
-            ioStats.addAll(metricStats);
-        }
-        return ioStats;
 
+                @Override
+                boolean isCountRequired() {
+                    return false;
+                }
+            };
+            parser.addParser(statParser);
+
+            Map<String, Object> parserStats = parser.getStats();
+
+            return stats.generateStatsMap(parserStats, "nfsIOStats");
+        }catch (IOException e) {
+            logger.error("Failed to run '" + nfsIOStatsCmd + "' for disk usage");
+        } catch (Exception e) {
+            logger.error("Exception occurred collecting disk usage metrics", e);
+        }
+        return new ArrayList<>();
     }
+
 }

@@ -63,7 +63,7 @@ public class Stats {
         return reader;
     }
 
-    public List<MetricData> getCPUStats() {
+    public List<MetricData> getCPUStats(final List<String> cpuIncludes) {
 
         logger.debug("Fetching CPU stats");
         BufferedReader reader = getStream(Commands.STAT_PATH);
@@ -74,7 +74,7 @@ public class Stats {
         FileParser.StatParser statParser = new FileParser.StatParser(CPUStats, Commands.SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
-                return line.startsWith("cpu");
+                return  isFiltered(line, cpuIncludes);
             }
 
             @Override
@@ -102,17 +102,7 @@ public class Stats {
         FileParser.StatParser statParser = new FileParser.StatParser(diskStats, Commands.SPACE_REGEX) {
             @Override
             boolean isMatchType(String line) {
-                return isDiskIncluded(line, diskIncludes);
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
+                return isFiltered(line, diskIncludes);
             }
         };
         parser.addParser(statParser);
@@ -135,11 +125,6 @@ public class Stats {
 
             @Override
             boolean isBase(String[] stats) {
-                return false;
-            }
-
-            @Override
-            boolean isCountRequired() {
                 return false;
             }
         };
@@ -168,16 +153,6 @@ public class Stats {
                 boolean isMatchType(String line) {
                     return !line.startsWith("Filesystem") && !line.startsWith("none");
                 }
-
-                @Override
-                boolean isBase(String[] stats) {
-                    return true;
-                }
-
-                @Override
-                boolean isCountRequired() {
-                    return false;
-                }
             };
             parser.addParser(statParser);
             stats = parser.getStats();
@@ -203,22 +178,7 @@ public class Stats {
             logger.debug("Fetching File NR stats");
             String[] fileNRStats = generateStatsArray("fileNRStats");
             FileParser parser = new FileParser(fhReader, "file handler", null);
-            FileParser.StatParser statParser = new FileParser.StatParser(fileNRStats, Commands.SPACE_REGEX) {
-                @Override
-                boolean isMatchType(String line) {
-                    return true;
-                }
-
-                @Override
-                boolean isBase(String[] stats) {
-                    return true;
-                }
-
-                @Override
-                boolean isCountRequired() {
-                    return false;
-                }
-            };
+            FileParser.StatParser statParser = new FileParser.StatParser(fileNRStats, Commands.SPACE_REGEX){};
             parser.addParser(statParser);
             List<MetricData> metrics = generateStatsMap(parser.getStats(), "fileNRStats");
             if (metrics != null) {
@@ -230,20 +190,6 @@ public class Stats {
 
             parser = new FileParser(inodeReader, "inode", null);
             statParser = new FileParser.StatParser(inodeNRStats, Commands.SPACE_REGEX) {
-                @Override
-                boolean isMatchType(String line) {
-                    return true;
-                }
-
-                @Override
-                boolean isBase(String[] stats) {
-                    return true;
-                }
-
-                @Override
-                boolean isCountRequired() {
-                    return false;
-                }
             };
             parser.addParser(statParser);
 
@@ -256,22 +202,7 @@ public class Stats {
             String[] dentriesStats = generateStatsArray("dentriesStats");
 
             parser = new FileParser(dentriesReader, "dcache", null);
-            statParser = new FileParser.StatParser(dentriesStats, Commands.SPACE_REGEX) {
-                @Override
-                boolean isMatchType(String line) {
-                    return true;
-                }
-
-                @Override
-                boolean isBase(String[] stats) {
-                    return true;
-                }
-
-                @Override
-                boolean isCountRequired() {
-                    return false;
-                }
-            };
+            statParser = new FileParser.StatParser(dentriesStats, Commands.SPACE_REGEX) {};
             parser.addParser(statParser);
             metrics = generateStatsMap(parser.getStats(), "dentriesStats");
             if (metrics != null) {
@@ -290,22 +221,7 @@ public class Stats {
         String[] loadAvgStats = generateStatsArray("loadAvgStats");
 
         FileParser parser = new FileParser(reader, "load average", null);
-        FileParser.StatParser statParser = new FileParser.StatParser(loadAvgStats, Commands.SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return true;
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
+        FileParser.StatParser statParser = new FileParser.StatParser(loadAvgStats, Commands.SPACE_REGEX) {};
         parser.addParser(statParser);
 
         return generateStatsMap(parser.getStats(), "loadAvgStats");
@@ -370,16 +286,6 @@ public class Stats {
             boolean isMatchType(String line) {
                 return line.startsWith("page");
             }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
         };
         logger.debug("Fetching swap stats");
         parser.addParser(pageParser);
@@ -387,16 +293,6 @@ public class Stats {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("swap");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
             }
         };
         parser.addParser(swapParser);
@@ -422,7 +318,7 @@ public class Stats {
 
         List<MetricData> metricStats = new ArrayList<MetricData>();
 
-       String[] procStats = generateStatsArray("procStats");
+        String[] procStats = generateStatsArray("procStats");
         String[] procLoadAvgStats = generateStatsArray("procLoadAvgStats");
 
         Map<String, Object> statsMap = getRowStats(reader, Commands.SPACE_REGEX, Commands.PROC_FILE_STATS, procStats, "process", 0, 1);
@@ -432,22 +328,7 @@ public class Stats {
         reader = getStream(Commands.LOADAVG_STAT_PATH);
 
         FileParser parser = new FileParser(reader, "process", null);
-        FileParser.StatParser statParser = new FileParser.StatParser(procLoadAvgStats, Commands.SPACE_REGEX + "|/") {
-            @Override
-            boolean isMatchType(String line) {
-                return true;
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
+        FileParser.StatParser statParser = new FileParser.StatParser(procLoadAvgStats, Commands.SPACE_REGEX + "|/") {};
         parser.addParser(statParser);
         Map<String, Object> map = parser.getStats();
         if (map != null) {
@@ -474,16 +355,6 @@ public class Stats {
             boolean isMatchType(String line) {
                 return line.startsWith("sockets");
             }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
         };
         parser.addParser(sockParser);
         metricStats.addAll(generateStatsMap(parser.getStats(),"sockUsedStats"));
@@ -494,16 +365,6 @@ public class Stats {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("TCP");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
             }
         };
         parser.addParser(tcpParser);
@@ -516,16 +377,6 @@ public class Stats {
             boolean isMatchType(String line) {
                 return line.startsWith("UDP:");
             }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
         };
         parser.addParser(udpParser);
         metricStats.addAll(generateStatsMap(parser.getStats(),"udpInuseStats"));
@@ -537,16 +388,6 @@ public class Stats {
             boolean isMatchType(String line) {
                 return line.startsWith("RAW");
             }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
         };
         parser.addParser(rawParser);
         metricStats.addAll(generateStatsMap(parser.getStats(),"rawInuseStats"));
@@ -557,16 +398,6 @@ public class Stats {
             @Override
             boolean isMatchType(String line) {
                 return line.startsWith("FRAG");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
             }
         };
         parser.addParser(ipfragParser);
@@ -589,7 +420,6 @@ public class Stats {
             for (int i = 0; i < fileKey.length && i < statsKey.length; i++) {
                 keyMap.put(fileKey[i], statsKey[i]);
             }
-
             try {
                 try {
                     String line;
@@ -664,15 +494,15 @@ public class Stats {
         return metricStats;
     }
 
-    public boolean isDiskIncluded(String line, List<String> diskIncludes) {
-        if (diskIncludes == null || diskIncludes.isEmpty()) {
+    public boolean isFiltered(String line, List<String> filterIncludes) {
+        if (filterIncludes == null || filterIncludes.isEmpty()) {
             return false;
         }
-        if (diskIncludes.contains("*")) {
+        if (filterIncludes.contains("*")) {
             return true;
         }
         Joiner joiner = Joiner.on("|");
-        String includePattern = joiner.join(diskIncludes);
+        String includePattern = joiner.join(filterIncludes);
         includePattern = "\\b(" + includePattern + ")\\b";
         Pattern pattern = Pattern.compile(includePattern);
         Matcher matcher = pattern.matcher(line);
@@ -688,25 +518,22 @@ public class Stats {
             String key = entry.getKey();
 
             List<MetricData> val = (ArrayList)entry.getValue();
-            for(MetricData metricData: val) {
-                try {
-                    logger.debug("Printing metric " + metricData.getName() + " with path: " + metricPath+"|"+key);
-                    metrics.add(new Metric(metricData.getName(), replaceCharacter(metricData.getStats().toString()), metricPath + "|" + key + "|" + metricData.getName(), metricData.getPropertiesMap()));
-
-                    // compute Avg IO utilization using metric in diskstats
-                    if ("time spent doing I/Os (ms)".equals(key)) {
-                        metrics.add(new Metric(metricData.getName(), replaceCharacter(metricData.getStats().toString()), metricPath + "|" + "Avg I/O Utilization %", metricData.getPropertiesMap()));
+            if(val != null) {
+                for (MetricData metricData : val) {
+                    try {
+                        if ("time spent doing I/Os (ms)".equals(key)) {
+                            metrics.add(new Metric(metricData.getName(), replaceCharacter(metricData.getStats().toString()), metricPath + "|" + "Avg I/O Utilization %", metricData.getPropertiesMap()));
+                        } else {
+                            metrics.add(new Metric(metricData.getName(), replaceCharacter(metricData.getStats().toString()), metricPath + "|" + key + "|" + metricData.getName(), metricData.getPropertiesMap()));
+                        }
+                    } catch (Exception e) {
+                        logger.error("Exception printing metric: " + metricPath + key + "|" + metricData.getName() + " with value: " + metricData.getStats().toString(), e);
                     }
-                } catch(Exception e) {
-                    logger.error("Exception printing metric: " + metricPath + key + "|" + metricData.getName() + " with value: " + metricData.getStats().toString(), e );
                 }
             }
         }
         logger.debug("Number of metrics reporting: " + metrics.size());
         if (metrics != null && metrics.size() > 0) {
-            for(Metric metricData : metrics){
-                logger.debug("Metric name: " + metricData.getMetricName() + "  value: " + metricData.getMetricValue() + " with path: " + metricData.getMetricPath());
-            }
             metricWriteHelper.transformAndPrintMetrics(metrics);
         }
     }
