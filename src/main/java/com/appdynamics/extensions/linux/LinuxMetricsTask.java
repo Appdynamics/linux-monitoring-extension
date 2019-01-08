@@ -9,10 +9,13 @@ package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
+import com.appdynamics.extensions.linux.input.MetricStat;
+import com.appdynamics.extensions.metrics.Metric;
 import org.apache.log4j.Logger;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
+import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Phaser;
@@ -32,45 +35,47 @@ public class LinuxMetricsTask implements Runnable {
 
     private Phaser phaser;
 
-    private List<Map<String, String>> metricReplacer;
+    private Stats stats;
 
-    public LinuxMetricsTask(String metricPrefix, MonitorContextConfiguration configuration, MetricWriteHelper metricWriteHelper, Phaser phaser, List<Map<String, String>> metricReplacer) {
+    public LinuxMetricsTask(MetricStat[] metricStats, String metricPrefix, MonitorContextConfiguration configuration, MetricWriteHelper metricWriteHelper, Phaser phaser, List<Map<String, String>> metricReplacer) {
         this.configuration = configuration;
         this.metricPrefix = metricPrefix;
         this.metricWriteHelper = metricWriteHelper;
         this.phaser = phaser;
-        this.metricReplacer = metricReplacer;
         this.phaser.register();
+
+        stats = new Stats(metricPrefix, metricStats, metricReplacer);
     }
 
     public void run() {
         try {
 
-            Stats stats = new Stats((List<Map<String, List<Map<String, String>>>>) configuration.getConfigYml().get("metrics"), metricPrefix, metricWriteHelper, metricReplacer);
-
-            logger.debug("Fetched stats from config");
-            Map<String, Object> statsMap = new HashMap<String, Object>();
-            List<MetricData> list;
-
+            List<Metric> metrics = new ArrayList<>();
+            logger.debug("Fetched metricStats from config");
             Map<String, List<String>> filtersMap = (Map<String, List<String>>) configuration.getConfigYml().get("filters");
 
-            statsMap.put("disk", stats.getDiskStats(filtersMap.get("diskIncludes")));
-            statsMap.put("CPU", stats.getCPUStats(filtersMap.get("cpuIncludes")));
-            statsMap.put("disk usage", stats.getDiskUsage());
-            statsMap.put("file", stats.getFileStats());
-            statsMap.put("load average", stats.getLoadStats());
-            statsMap.put("memory", stats.getMemStats());
-            statsMap.put("network", stats.getNetStats());
-            statsMap.put("page", stats.getPageSwapStats());
-            statsMap.put("process", stats.getProcStats());
-            statsMap.put("socket", stats.getSockStats());
+            metrics.addAll(stats.getDiskStats(filtersMap.get("diskIncludes")));
+            metrics.addAll(stats.getCPUStats(filtersMap.get("cpuIncludes")));
+            metrics.addAll(stats.getDiskUsage());
+            metrics.addAll(stats.getFileStats());
+            metrics.addAll(stats.getLoadStats());
+            metrics.addAll(stats.getMemStats());
+            metrics.addAll(stats.getNetStats());
+            metrics.addAll(stats.getPageSwapStats());
+            metrics.addAll(stats.getProcStats());
+            metrics.addAll(stats.getSockStats());
 
-            logger.debug("StatsMap size: " + statsMap.size());
+            metrics.add(new Metric("HeartBeat", String.valueOf(BigInteger.ONE), metricPrefix + "|HeartBeat", "AVG", "AVG", "IND"));
+            for(Metric m: metrics){
+                logger.debug("Metricdata: " + m.getMetricName() + ": " + m.getMetricPath());
+            }
 
-            stats.printNestedMap(statsMap, metricPrefix);
+            if (metrics != null && metrics.size() > 0) {
+                metricWriteHelper.transformAndPrintMetrics(metrics);
+            }
 
         } catch (Exception e) {
-            logger.error("LinuxMetrics Task error: " + e.getMessage());
+            logger.error("LinuxMetrics Task error: " , e);
             metricWriteHelper.printMetric(metricPrefix + "|HeartBeat", BigDecimal.ZERO, "AVG.AVG.IND");
 
         } finally {

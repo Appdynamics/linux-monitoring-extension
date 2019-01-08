@@ -5,7 +5,6 @@ package com.appdynamics.extensions.linux;
  */
 public class Commands {
 
-    public static final String IDENTIFIER = "_ID_";
     public static final String STAT_PATH = "/proc/stat";
     public static final String NET_STAT_PATH = "/proc/net/dev";
     public static final String DISK_STAT_PATH = "/proc/diskstats";

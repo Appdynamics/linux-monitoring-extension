@@ -1,0 +1,177 @@
+<!--
+  ~ /*
+  ~   Copyright 2018. AppDynamics LLC and its affiliates.
+  ~   All Rights Reserved.
+  ~   This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
+  ~   The copyright notice above does not evidence any actual or intended publication of such source code.
+  ~  */
+  -->
+
+<!--
+aggregationType = AVERAGE | SUM | OBSERVATION
+timeRollUpType = AVERAGE | SUM | CURRENT
+clusterRollUpType = INDIVIDUAL | COLLECTIVE
+-->
+<!--
+Set delta = true for metric to report per-min data
+-->
+<metricStats>
+    <!-- Items in Nodes|<node> - data looked up from /api/nodes nodeDataMetric-->
+    <stat name="cpuStats" children="entries">
+        <metric attr="nice" alias="nice" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="system" alias="system" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="idle" alias="idle" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="iowait" alias="iowait" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="irq" alias="irq" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="softirq" alias="softirq" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="steal" alias="steal" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="guest" alias="guest" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="guest_nice" alias="guest_nice" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="pageStats" children="entries">
+        <metric attr="page" alias="page" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="page in" alias="page in" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="page out" alias="page out" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="swapStats" children="entries">
+        <metric attr="swap" alias="swap" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap page in" alias="swap page in" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap page out" alias="swap page out" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="pageSwapStats" children="entries">
+        <metric attr="page in" alias="page in" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="page out" alias="page out" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap page in" alias="swap page in" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap page out" alias="swap page out" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="page fault" alias="page fault" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="page major fault" alias="page major fault" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="netStats" children="entries">
+        <metric attr="receive bytes" alias="receive bytes" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="receive packets" alias="receive packets" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="receive errs" alias="receive errs" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="receive drop" alias="receive drop" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="receive fifo" alias="receive fifo" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="receive frame" alias="receive frame" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="receive compressed" alias="receive compressed" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="received multicast" alias="received multicast" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit bytes" alias="transmit bytes" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit bytes" alias="transmit bytes" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit packets" alias="transmit packets" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit errs" alias="transmit errs" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit drop" alias="transmit drop" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit fifo" alias="transmit fifo" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit colls" alias="transmit colls" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit carrier" alias="transmit carrier" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="transmit compressed" alias="transmit compressed" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="diskStats" children="entries">
+        <metric attr="major" alias="major" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="minor" alias="minor" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="reads completed successfully" alias="reads completed successfully" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="reads merged" alias="reads merged" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="time spent reading (ms)" alias="time spent reading (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="writes completed" alias="writes completed" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="writes merged" alias="writes merged" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="sectors written" alias="sectors written" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="time spent writing (ms)" alias="time spent writing (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="I/Os currently in progress" alias="I/Os currently in progress" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="time spent doing I/Os (ms)" alias="time spent doing I/Os (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="weighted time spent doing I/Os (ms)" alias="weighted time spent doing I/Os (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="diskUsageStats" children="entries">
+        <metric attr="size (MB)" alias="size (MB)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="used (MB)" alias="used (MB)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="available (MB)" alias="available (MB)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="use %" alias="use %" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="fileNRStats" children="entries">
+        <metric attr="fhalloc" alias="fhalloc" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="fhfree" alias="fhfree" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="fhmax" alias="fhmax" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="inodeNRStats" children="entries">
+        <metric attr="inalloc" alias="inalloc" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="infree" alias="infree" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="dentriesStats" children="entries">
+        <metric attr="dentries" alias="dentries" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="unused" alias="unused" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="agelimit" alias="agelimit" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="wantpages" alias="wantpages" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="loadAvgStats" children="entries">
+        <metric attr="load avg (1 min)" alias="load avg (1 min)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="load avg (5 min)" alias="load avg (5 min)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="load avg (15 min)" alias="load avg (15 min)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="memStats" children="entries">
+        <metric attr="total" alias="total" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="free" alias="free" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="buffers" alias="buffers" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="cached" alias="cached" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap cached" alias="swap cached" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="active" alias="active" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="inactive" alias="inactive" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap total" alias="swap total" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap free" alias="swap free" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="dirty" alias="dirty" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="writeback" alias="writeback" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="mapped" alias="mapped" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="slab" alias="slab" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="commit limit" alias="commit limit" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="committed_As" alias="committed_As" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="used" alias="used" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="used %" alias="used %" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap used" alias="swap used" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="swap used %" alias="swap used %" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="real free" alias="real free" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="real free %" alias="real free %" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="procFileStats" children="entries">
+        <metric attr="processes" alias="processes" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="procs_running" alias="procs_running" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="procs_blocked" alias="procs_blocked" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="procLoadAvgStats" children="entries">
+        <metric attr="runqueue" alias="runqueue" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="count" alias="count" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="procStats" children="entries">
+        <metric attr="processes" alias="processes" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="running" alias="running" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="blocked" alias="blocked" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="sockUsedStats" children="entries">
+        <metric attr="used" alias="used" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="tcpInuseStats" children="entries">
+        <metric attr="tcp" alias="tcp" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="udpInuseStats" children="entries">
+        <metric attr="udp" alias="udp" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="rawInuseStats" children="entries">
+        <metric attr="raw" alias="raw" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="ipfragStats" children="entries">
+        <metric attr="ifrag" alias="ifrag" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="mountedNFSStatus" children="entries">
+        <metric attr="size (MB)" alias="size (MB)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="used (MB)" alias="used (MB)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="available (MB)" alias="available (MB)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+        <metric attr="use %" alias="use %" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" />
+    </stat>
+    <stat name="nfsIOStats" children="entries">
+        <metric attr="rkB_nor/s" alias="rkB_nor/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" multiplier="100"/>
+        <metric attr="WkB_nor/s" alias="WkB_nor/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" multiplier="100"/>
+        <metric attr="rkB_dir/s" alias="rkB_dir/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" multiplier="100"/>
+        <metric attr="WkB_dir/s" alias="WkB_dir/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" multiplier="100"/>
+        <metric attr="rkB_svr/s" alias="rkB_svr/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" multiplier="100"/>
+        <metric attr="WkB_svr/s" alias="WkB_svr/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" multiplier="100"/>
+        <metric attr="ops/s" alias="ops/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE"/>
+        <metric attr="rops/s" alias="rops/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE"/>
+        <metric attr="wops/s" alias="wops/s" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE"/>
+    </stat>
+</metricStats>

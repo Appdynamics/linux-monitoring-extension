@@ -9,6 +9,9 @@ package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.ABaseMonitor;
 import com.appdynamics.extensions.TasksExecutionServiceProvider;
+import com.appdynamics.extensions.linux.input.MetricStat;
+
+import java.util.Map;
 
 
 public class LinuxMonitor extends ABaseMonitor {
@@ -41,4 +44,10 @@ public class LinuxMonitor extends ABaseMonitor {
         return 1;
     }
 
+
+    @Override
+    protected void initializeMoreStuff(Map<String, String> args) {
+        this.getContextConfiguration().setMetricXml(args.get("metric-file"), MetricStat.MetricStats.class);
+
+    }
 }

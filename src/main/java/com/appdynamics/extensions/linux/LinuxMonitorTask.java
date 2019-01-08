@@ -4,6 +4,7 @@ import com.appdynamics.extensions.AMonitorTaskRunnable;
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.TasksExecutionServiceProvider;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
+import com.appdynamics.extensions.linux.input.MetricStat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,15 +38,15 @@ public class LinuxMonitorTask implements AMonitorTaskRunnable {
         try {
             Phaser phaser = new Phaser();
             phaser.register();
+            MetricStat.MetricStats metricConfig = (MetricStat.MetricStats) configuration.getMetricsXml();
 
-            LinuxMetricsTask linuxMetricsTask = new LinuxMetricsTask(metricPrefix, configuration, metricWriter, phaser, metricReplacer);
+            LinuxMetricsTask linuxMetricsTask = new LinuxMetricsTask(metricConfig.getMetricStats(), metricPrefix, configuration, metricWriter, phaser, metricReplacer);
             configuration.getContext().getExecutorService().execute("LinuxMetricsTask", linuxMetricsTask);
             logger.debug("Registering phaser for LinuxMetricsTask" );
 
-            NFSMountMetricsTask nfsMountMetricsTask = new NFSMountMetricsTask(metricPrefix, configuration, metricWriter, phaser, metricReplacer);
+            NFSMountMetricsTask nfsMountMetricsTask = new NFSMountMetricsTask(metricConfig.getMetricStats(), metricPrefix, configuration, metricWriter, phaser, metricReplacer);
             configuration.getContext().getExecutorService().execute("NFSMountMetricCollectorTask", nfsMountMetricsTask);
             logger.debug("Registering phaser for NFSMountMetricCollectorTask" );
-
 
             //Wait for all tasks to finish
             phaser.arriveAndAwaitAdvance();
