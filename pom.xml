@@ -48,16 +48,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.3.2</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.4</version>
-        </dependency>
-        <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
             <version>1.4.7</version>
@@ -146,6 +136,7 @@
                                 <copy todir="${target.dir}">
                                     <fileset dir="src/main/resources/conf" includes="monitor.xml"/>
                                     <fileset dir="src/main/resources/conf" includes="config.yml"/>
+                                    <fileset dir="src/main/resources/conf" includes="metrics.xml"/>
                                     <fileset dir="${project.basedir}" includes="LICENSE.txt,NOTICE.txt"/>
                                 </copy>
                                 <copy todir="${target.dir}">
