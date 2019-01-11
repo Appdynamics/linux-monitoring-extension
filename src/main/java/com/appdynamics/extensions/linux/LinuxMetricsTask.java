@@ -66,9 +66,6 @@ public class LinuxMetricsTask implements Runnable {
             metrics.addAll(stats.getSockStats());
 
             metrics.add(new Metric("HeartBeat", String.valueOf(BigInteger.ONE), metricPrefix + "|HeartBeat", "AVG", "AVG", "IND"));
-            for(Metric m: metrics){
-                logger.debug("Metricdata: " + m.getMetricName() + ": " + m.getMetricPath());
-            }
 
             if (metrics != null && metrics.size() > 0) {
                 metricWriteHelper.transformAndPrintMetrics(metrics);

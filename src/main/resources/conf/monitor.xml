@@ -21,7 +21,7 @@
         <task-arguments>
             <!-- config file-->
             <argument name="config-file" is-required="true" default-value="monitors/LinuxMonitor/config.yml" />
-            <argument name="config-file" is-required="true" default-value="monitors/LinuxMonitor/metrics.xml" />
+            <argument name="metric-file" is-required="true" default-value="monitors/LinuxMonitor/metrics.xml" />
         </task-arguments>
         <java-task>
             <classpath>linux-monitoring-extension.jar</classpath>

@@ -8,9 +8,9 @@ metricPrefix: "Server|Component:<TIER_ID>|Custom Metrics|Linux Monitor|"
 
 # An availability status for NFS mounts is reported by executing the command `df | grep <fileSystem> | wc -l`.
 # displayName: the name with which the metric is reported in AppD Metric Browser. If empty, metric is reported with fileSystem as its name.
-mountedNFS:
-      - fileSystem: "sda"
-        displayName: "NFS1"
+#mountedNFS:
+#      - fileSystem: "sda"
+#        displayName: "NFS1"
 
 # "diskIncludes" to fetch disk statistics only for the configured.
 # Ex: ["*"] fetches all disks
@@ -18,7 +18,7 @@ mountedNFS:
 filters:
   diskIncludes: [".*"]
   cpuIncludes: [".*"]
-  mountedNFS: [.*]
+  mountedNFS: [".*"]
 
 # Replaces characters in metric name with the specified characters.
 # "replace" takes any regular expression
@@ -33,8 +33,8 @@ metricCharacterReplacer:
 numberOfThreads: 5
 
 derivedMetrics:
-    - derivedMetricPath: "{x}|diskStats|I/O ops per sec"
-      formula: "({x}|diskStats|reads completed successfully + {x}|diskStats|writes completed)/60"
+    - derivedMetricPath: "diskStats|I/O ops per sec"
+      formula: "(diskStats|reads completed successfully + diskStats|writes completed)/60"
       collectDelta: "true"
       metricType: "OBS.AVG.COL"
 
