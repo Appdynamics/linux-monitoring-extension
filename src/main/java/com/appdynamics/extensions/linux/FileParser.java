@@ -7,6 +7,7 @@
 
 package com.appdynamics.extensions.linux;
 
+import com.appdynamics.extensions.linux.input.MetricConfig;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
@@ -49,7 +50,6 @@ public class FileParser {
                     String line;
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
-                        int i=0;
                         for (StatParser parser : parserList) {
                             if (parser.isMatchType(line)) {
                                 List<String> stats = new LinkedList<>(Arrays.asList(line.split(parser.regex)));
@@ -61,7 +61,10 @@ public class FileParser {
                                         iter.remove();
                                     }
                                 }
-                                Map<String, String> map = getStatMap(parser.keys, stats);
+                                Map<String, String> map = new HashMap<>();
+                                for(MetricConfig metricConfig: parser.filteredMetrics){
+                                    map.put(metricConfig.getAttr(), stats.get(Integer.valueOf(metricConfig.getIndex())));
+                                }
 
                                 if (parser.isBase(line.split(parser.regex))) {
                                     statsMap.putAll(map);   //put in base dir
@@ -88,20 +91,12 @@ public class FileParser {
         return statsMap;
     }
 
-    private Map<String, String> getStatMap(String[] keys, List<String> vals) {
-        Map<String, String> map = new HashMap<String, String>();
-        for (int i = 0; i < vals.size() && i < keys.length; i++) {
-            map.put(keys[i], vals.get(i));
-        }
-        return map;
-    }
-
     public abstract static class StatParser {
-        private String[] keys;
+        private MetricConfig[] filteredMetrics;
         private String regex;
 
-        public StatParser(String[] keys, String regex) {
-            this.keys = keys;
+        public StatParser(MetricConfig[] filteredMetrics, String regex) {
+            this.filteredMetrics = filteredMetrics;
             this.regex = regex;
         }
 

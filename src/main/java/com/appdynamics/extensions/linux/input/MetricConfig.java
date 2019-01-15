@@ -45,6 +45,8 @@ public class MetricConfig {
     private String isBoolean= "false";
     @XmlElement(name = "convert")
     private MetricConverter[] convert;
+    @XmlAttribute
+    private String index;
 
     public String getAttr() {
         return attr;
@@ -135,5 +137,13 @@ public class MetricConfig {
 
     public void setConvert(MetricConverter[] convert) {
         this.convert = convert;
+    }
+
+    public String getIndex() {
+        return index;
+    }
+
+    public void setIndex(String index) {
+        this.index = index;
     }
 }

@@ -8,6 +8,7 @@ package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
+import com.appdynamics.extensions.linux.input.MetricConfig;
 import com.appdynamics.extensions.linux.input.MetricStat;
 import com.appdynamics.extensions.metrics.Metric;
 import org.apache.log4j.Logger;
@@ -27,8 +28,6 @@ public class NFSMountMetricsTask implements Runnable {
 
     private Logger logger = Logger.getLogger(NFSMountMetricsTask.class);
 
-    private static String[] NFS_IO_FILE_STATS = {"rkB_nor/s", "WkB_nor/s", "rkB_dir/s", "WkB_dir/s", "rkB_svr/s", "WkB_svr/s", "ops/s", "rops/s", "wops/s"};
-
     private String[] command = {"df"};
 
     private String nfsIOStatsCmd = "nfsiostat";
@@ -43,9 +42,12 @@ public class NFSMountMetricsTask implements Runnable {
 
     private MetricWriteHelper metricWriteHelper;
 
+    private MetricStat[] metricStats;
+
     public NFSMountMetricsTask(MetricStat[] metricStats, String metricPrefix, MonitorContextConfiguration configuration, MetricWriteHelper metricWriteHelper, Phaser phaser, List<Map<String, String>> metricReplacer) {
         this.configuration = configuration;
         this.metricWriteHelper = metricWriteHelper;
+        this.metricStats = metricStats;
         this.phaser = phaser;
         this.phaser.register();
 
@@ -87,13 +89,21 @@ public class NFSMountMetricsTask implements Runnable {
             p = rt.exec(new String[]{"bash", "-c", command[0]});
             input = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
+            logger.debug("Inside mountnfsStatus");
             FileParser parser = new FileParser(input, "mountedNFSStatus");
 
-            String[] mountedNFSStats = stats.generateStatsArray("mountedNFSStatus");
+            MetricConfig[] statArray = null;
 
-            FileParser.StatParser statParser = new FileParser.StatParser(mountedNFSStats, SPACE_REGEX) {
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("mountedNFSStatus")) {
+                    statArray = metricStats[i].getMetricConfig();
+                }
+            }
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, SPACE_REGEX) {
                 @Override
-                boolean isMatchType(String line) { return stats.isFiltered(line, mountedNFSFilter) || (!line.startsWith("Filesystem") && !line.startsWith("none")); }
+                boolean isMatchType(String line) {
+                    return stats.isFiltered(line, mountedNFSFilter) && (!line.startsWith("Filesystem") && !line.startsWith("none"));
+                }
 
                 @Override
                 boolean isBase(String[] stats) {
@@ -110,7 +120,7 @@ public class NFSMountMetricsTask implements Runnable {
         } catch (IOException e) {
             logger.error("Failed to run for NFS mount ", e);
         } catch (Exception e) {
-            logger.error("Exception occurred collecting NFS metrics", e);
+            logger.error("Exception occurred collecting NFS mount metrics", e);
         }
 
         return metricData;
@@ -129,11 +139,15 @@ public class NFSMountMetricsTask implements Runnable {
 
             FileParser parser = new FileParser(reader, "nfsIOStats");
 
-            String[] mountedNFSStats = stats.generateStatsArray("nfsIOStats");
-
-            FileParser.StatParser statParser = new FileParser.StatParser(mountedNFSStats, SPACE_REGEX) {
+            MetricConfig[] statArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("nfsIOStats")) {
+                    statArray = metricStats[i].getMetricConfig();
+                }
+            }
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, SPACE_REGEX) {
                 @Override
-                boolean isMatchType(String line) { return stats.isFiltered(line, mountedNFSFilter) || (!line.startsWith("Filesystem") && !line.startsWith("none")); }
+                boolean isMatchType(String line) { return stats.isFiltered(line, mountedNFSFilter) && (!line.startsWith("Filesystem") && !line.startsWith("none")); }
 
                 @Override
                 boolean isBase(String[] stats) {
@@ -147,8 +161,8 @@ public class NFSMountMetricsTask implements Runnable {
             for(Map.Entry entry: parserStats.entrySet()){
                 metricData.addAll(stats.generateMetrics((Map<String, String>)entry.getValue(), "nfsIOStats", String.valueOf(entry.getKey())));
             }
-        }catch (IOException e) {
-            logger.error("Failed to run '" + nfsIOStatsCmd + "' for NFS I/O");
+        }catch (IOException ex) {
+            logger.error("Failed to run '" + nfsIOStatsCmd + "' for NFS I/O", ex);
         } catch (Exception e) {
             logger.error("Exception occurred collecting NFS I/O metrics", e);
         }

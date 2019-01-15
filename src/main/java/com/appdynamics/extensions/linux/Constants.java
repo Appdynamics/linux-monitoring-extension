@@ -3,7 +3,7 @@ package com.appdynamics.extensions.linux;
 /**
  * Created by akshay.srivastava on 9/12/18.
  */
-public class Commands {
+public class Constants {
 
     public static final String STAT_PATH = "/proc/stat";
     public static final String NET_STAT_PATH = "/proc/net/dev";
@@ -25,5 +25,6 @@ public class Commands {
                     "Dirty", "Writeback", "Mapped", "Slab", "CommitLimit", "Committed_AS"};
     public static String[] PAGE_SWAP_FILE_STATS = {"pgpgin", "pgpgout", "pswpin", "pswpout", "pgfault", "pgmajfault"};
     public static String[] PROC_FILE_STATS = {"processes", "procs_running", "procs_blocked"};
+    public static String[] SOCK_STATS = {"sockets:", "tcp:","udp:","raw:","frag:"};
 
 }
