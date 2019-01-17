@@ -46,7 +46,7 @@ public class Stats {
         this.metricStats = metricStats;
     }
 
-    private BufferedReader getStream(String filePath) {
+    protected BufferedReader getStream(String filePath) {
         File file = new File(filePath);
         BufferedReader reader = null;
         try {
@@ -90,7 +90,7 @@ public class Stats {
             for(Map.Entry entry: parserStats.entrySet()){
                 metricData.addAll(generateMetrics((Map<String, String>)entry.getValue(), "cpuStats", String.valueOf(entry.getKey())));
             }
-            Metric countMetric = new Metric("CPU (Cores) Logical", String.valueOf(parserStats.entrySet().size()), metricPrefix + "cpu|");
+            Metric countMetric = new Metric("CPU (Cores) Logical", String.valueOf(parserStats.entrySet().size()), metricPrefix + "|cpu|CPU (Cores) Logical" );
 
             metricData.add(countMetric);
         }catch(Exception e){

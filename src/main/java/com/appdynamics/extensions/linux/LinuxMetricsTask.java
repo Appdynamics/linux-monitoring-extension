@@ -37,6 +37,8 @@ public class LinuxMetricsTask implements Runnable {
 
     private Stats stats;
 
+    private List<Metric> metrics = new ArrayList<>();
+
     public LinuxMetricsTask(MetricStat[] metricStats, String metricPrefix, MonitorContextConfiguration configuration, MetricWriteHelper metricWriteHelper, Phaser phaser, List<Map<String, String>> metricReplacer) {
         this.configuration = configuration;
         this.metricPrefix = metricPrefix;
@@ -49,8 +51,6 @@ public class LinuxMetricsTask implements Runnable {
 
     public void run() {
         try {
-
-            List<Metric> metrics = new ArrayList<>();
             logger.debug("Fetched metricStats from config");
             Map<String, List<String>> filtersMap = (Map<String, List<String>>) configuration.getConfigYml().get("filters");
 
@@ -79,5 +79,9 @@ public class LinuxMetricsTask implements Runnable {
             logger.debug("Linux Metrics Task Phaser arrived ");
             phaser.arriveAndDeregister();
         }
+    }
+
+    public List<Metric> getMetrics() {
+        return metrics;
     }
 }

@@ -1,0 +1,51 @@
+# Use this only if SIM is enabled
+metricPrefix: "Custom Metrics|Linux Monitor|"
+
+# If SIM is not enabled, then use this
+#metricPrefix: "Server|Component:<TIER_ID>|Custom Metrics|Linux Monitor|"
+#To find the <COMPONENT_ID> in your environment,
+#please follow the screenshot https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java
+
+# An availability status for NFS mounts is reported by executing the command `df | grep <fileSystem> | wc -l`.
+# displayName: the name with which the metric is reported in AppD Metric Browser. If empty, metric is reported with fileSystem as its name.
+#mountedNFS:
+#      - fileSystem: "sda"
+#        displayName: "NFS1"
+
+# "diskIncludes" to fetch disk statistics only for the configured.
+# Ex: ["*"] fetches all disks
+# ["sda.*", "ram1", "loop0"]
+filters:
+  diskIncludes: [".*"]
+  cpuIncludes: [".*"]
+  mountedNFS: [".*"]
+
+# Replaces characters in metric name with the specified characters.
+# "replace" takes any regular expression
+# "replaceWith" takes the string to replace the matched characters
+
+metricCharacterReplacer:
+  - replace: "%"
+    replaceWith: ""
+
+
+# number of concurrent tasks
+numberOfThreads: 5
+
+derivedMetrics:
+    - derivedMetricPath: "diskStats|I/O ops per sec"
+      formula: "(diskStats|reads completed successfully + diskStats|writes completed)/60"
+      collectDelta: "true"
+      metricType: "OBS.AVG.COL"
+
+#Files used by the extension to fetch monitoring data
+# /proc/stat
+# /proc/net/dev
+# /proc/diskstats
+# /proc/meminfo
+# /proc/sys/fs/file-nr
+# /proc/sys/fs/inode-nr
+# /proc/sys/fs/dentry-state
+# /proc/loadavg
+# /proc/vmstat
+# proc/net/sockstat

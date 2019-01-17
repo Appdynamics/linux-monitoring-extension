@@ -44,6 +44,8 @@ public class NFSMountMetricsTask implements Runnable {
 
     private MetricStat[] metricStats;
 
+    private List<Metric> metrics = new ArrayList<>();
+
     public NFSMountMetricsTask(MetricStat[] metricStats, String metricPrefix, MonitorContextConfiguration configuration, MetricWriteHelper metricWriteHelper, Phaser phaser, List<Map<String, String>> metricReplacer) {
         this.configuration = configuration;
         this.metricWriteHelper = metricWriteHelper;
@@ -56,10 +58,6 @@ public class NFSMountMetricsTask implements Runnable {
 
     public void run() {
         try {
-            List<Metric> metrics = new ArrayList<>();
-
-            logger.debug("Fetched metricStats from config");
-
             List<String> mountFilters = ((Map<String, List<String>>) configuration.getConfigYml().get("filters")).get("mountedNFS");
 
             metrics.addAll(getMountStatus(mountFilters));
@@ -167,5 +165,9 @@ public class NFSMountMetricsTask implements Runnable {
             logger.error("Exception occurred collecting NFS I/O metrics", e);
         }
         return metricData;
+    }
+
+    public List<Metric> getMetrics() {
+        return metrics;
     }
 }
