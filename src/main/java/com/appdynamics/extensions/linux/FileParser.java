@@ -53,7 +53,7 @@ public class FileParser {
                         for (StatParser parser : parserList) {
                             if (parser.isMatchType(line)) {
                                 List<String> stats = new LinkedList<>(Arrays.asList(line.split(parser.regex)));
-                                String name = stats.get(0);
+                                String name = stats.get(parser.getNameIndex());
 
                                 ListIterator<String> iter = stats.listIterator();
                                 while(iter.hasNext()){
@@ -118,6 +118,10 @@ public class FileParser {
          */
          boolean isBase(String[] stats){
              return true;
+         }
+
+         int getNameIndex(){
+            return 0;
          }
 
     }

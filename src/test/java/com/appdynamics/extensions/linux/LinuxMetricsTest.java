@@ -17,6 +17,7 @@ import com.google.common.collect.Maps;
 import com.singularity.ee.agent.systemagent.api.AManagedMonitor;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -73,20 +74,19 @@ public class LinuxMetricsTest {
 
     @Test
     public void testDiskStats(){
-        Map<String, String> memoryExpectedValueMap = Maps.newHashMap();
+        Map<String, String> diskExpectedValueMap = Maps.newHashMap();
 
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|minor","7135");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|writes completed","20428");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|weighted time spent doing I/Os (ms)","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sectors written","12224");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|I/Os currently in progress","26272");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|reads completed successfully","1930298");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|writes merged","626400");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|time spent writing (ms)","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|major","46500");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|reads merged","34220");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|time spent doing I/Os (ms)","46380");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|time spent reading (ms)","13984");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|reads completed successfully","46577");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|reads merged","7135");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|sectors read","1934418");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|time spent reading (ms)","34260");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|writes completed","14327");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|writes merged","20428");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|sectors written","626400");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|time spent writing (ms)","12360");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|I/Os currently in progress","0");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|time spent doing I/Os (ms)","26408");
+        diskExpectedValueMap.put("Custom Metrics|Linux Monitor|diskStats|sda|weighted time spent doing I/Os (ms)","46556");
 
 
         PowerMockito.when(linuxStats.getStream(anyString())).thenAnswer(
@@ -100,20 +100,21 @@ public class LinuxMetricsTest {
                 });
 
         List<String> diskFilter = new ArrayList<>();
-        diskFilter.add(".*");
+        diskFilter.add("sda");
 
         for(Metric metric: linuxStats.getDiskStats(diskFilter)) {
 
             String actualValue = metric.getMetricValue();
             String metricName = metric.getMetricPath();
-            if (memoryExpectedValueMap.containsKey(metricName)) {
-                String expectedValue = memoryExpectedValueMap.get(metricName);
+            if (diskExpectedValueMap.containsKey(metricName)) {
+                String expectedValue = diskExpectedValueMap.get(metricName);
                 Assert.assertEquals("The value of the metric " + metricName, expectedValue, actualValue);
-                memoryExpectedValueMap.remove(metricName);
+                diskExpectedValueMap.remove(metricName);
             } else {
                 Assert.fail("Unknown Metric " + metricName);
             }
         }
+        Assert.assertTrue(diskExpectedValueMap.isEmpty());
     }
 
     @Test
@@ -190,8 +191,7 @@ public class LinuxMetricsTest {
                         return br;
                     }
                 });
-
-        for(Metric metric: linuxStats.getLoadStats()) {
+        for(Metric metric: linuxStats.getMemStats()) {
 
             String actualValue = metric.getMetricValue();
             String metricName = metric.getMetricPath();
@@ -203,30 +203,31 @@ public class LinuxMetricsTest {
                 Assert.fail("Unknown Metric " + metricName);
             }
         }
+        Assert.assertTrue(memoryExpectedValueMap.isEmpty());
 
     }
 
     @Test
     public void testNetworkStats(){
 
-        Map<String, String> memoryExpectedValueMap = Maps.newHashMap();
+        Map<String, String> networkExpectedValueMap = Maps.newHashMap();
 
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit packets","4905");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive compressed","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive packets","7113");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive errs","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit colls","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive bytes","5681713");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive fifo","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit carrier","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive drop","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit bytes","1442904");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit compressed","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|received multicast","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit drop","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit fifo","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit errs","0");
-        memoryExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive frame","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit packets","4905");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive compressed","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive packets","7113");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive errs","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit colls","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive bytes","5681713");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive fifo","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit carrier","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive drop","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit bytes","1442904");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit compressed","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|received multicast","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit drop","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit fifo","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|transmit errs","0");
+        networkExpectedValueMap.put("Custom Metrics|Linux Monitor|netStats|enp0s3|receive frame","0");
 
 
         PowerMockito.when(linuxStats.getStream(anyString())).thenAnswer(
@@ -243,10 +244,10 @@ public class LinuxMetricsTest {
 
             String actualValue = metric.getMetricValue();
             String metricName = metric.getMetricPath();
-            if (memoryExpectedValueMap.containsKey(metricName)) {
-                String expectedValue = memoryExpectedValueMap.get(metricName);
+            if (networkExpectedValueMap.containsKey(metricName)) {
+                String expectedValue = networkExpectedValueMap.get(metricName);
                 Assert.assertEquals("The value of the metric " + metricName, expectedValue, actualValue);
-                memoryExpectedValueMap.remove(metricName);
+                networkExpectedValueMap.remove(metricName);
             } else {
                 Assert.fail("Unknown Metric " + metricName);
             }

@@ -65,18 +65,17 @@ Set delta = true for metric to report per-min data
         <metric attr="transmit compressed" alias="transmit compressed" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="15"/>
     </stat>
     <stat name="diskStats" children="entries">
-        <metric attr="major" alias="major" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="0"/>
-        <metric attr="minor" alias="minor" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="1"/>
         <metric attr="reads completed successfully" alias="reads completed successfully" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="2"/>
         <metric attr="reads merged" alias="reads merged" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="3"/>
-        <metric attr="time spent reading (ms)" alias="time spent reading (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="4"/>
-        <metric attr="writes completed" alias="writes completed" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="5"/>
-        <metric attr="writes merged" alias="writes merged" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="6"/>
-        <metric attr="sectors written" alias="sectors written" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="7"/>
-        <metric attr="time spent writing (ms)" alias="time spent writing (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="8"/>
-        <metric attr="I/Os currently in progress" alias="I/Os currently in progress" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="9"/>
-        <metric attr="time spent doing I/Os (ms)" alias="time spent doing I/Os (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="10"/>
-        <metric attr="weighted time spent doing I/Os (ms)" alias="weighted time spent doing I/Os (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="11"/>
+        <metric attr="sectors read" alias="sectors read" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="4"/>
+        <metric attr="time spent reading (ms)" alias="time spent reading (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="5"/>
+        <metric attr="writes completed" alias="writes completed" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="6"/>
+        <metric attr="writes merged" alias="writes merged" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="7"/>
+        <metric attr="sectors written" alias="sectors written" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="8"/>
+        <metric attr="time spent writing (ms)" alias="time spent writing (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="9"/>
+        <metric attr="I/Os currently in progress" alias="I/Os currently in progress" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="10"/>
+        <metric attr="time spent doing I/Os (ms)" alias="time spent doing I/Os (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="11"/>
+        <metric attr="weighted time spent doing I/Os (ms)" alias="weighted time spent doing I/Os (ms)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="12"/>
     </stat>
     <stat name="diskUsageStats" children="entries">
         <metric attr="size (MB)" alias="size (MB)" aggregationType = "OBSERVATION" timeRollUpType = "CURRENT" clusterRollUpType = "COLLECTIVE" index="0"/>

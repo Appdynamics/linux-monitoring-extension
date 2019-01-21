@@ -102,7 +102,7 @@ public class Stats {
     public List<Metric> getDiskStats(final List<String> diskIncludes) {
         BufferedReader reader = getStream(Constants.DISK_STAT_PATH);
         logger.debug("Fetching disk metricStats for " + diskIncludes);
-        FileParser parser = new FileParser(reader, "disk");
+        FileParser parser = new FileParser(reader, "diskStats");
         List<Metric> metricData = new ArrayList<>();
 
         try {
@@ -118,9 +118,23 @@ public class Stats {
                 boolean isMatchType(String line) {
                     return isFiltered(line, diskIncludes);
                 }
+
+                @Override
+                boolean isBase(String[] stats) {
+                    return false;
+                }
+
+                @Override
+                int getNameIndex(){
+                    return 2;
+                }
             };
             parser.addParser(statParser);
-            metricData.addAll(generateMetrics(parser.getStats(), "diskStats"));
+            Map<String, Object> parserStats = parser.getStats();
+
+            for(Map.Entry entry: parserStats.entrySet()){
+                metricData.addAll(generateMetrics((Map<String, String>)entry.getValue(), "diskStats", String.valueOf(entry.getKey())));
+            }
         }catch(Exception e){
             logger.error("Exception fetching disk metricStats", e);
         }
@@ -425,7 +439,6 @@ public class Stats {
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
                         String[] stats = line.split(splitRegex);
-                        logger.debug(line + "and keyIndex val: " + stats[keyIndex]);
                         String name = null;
                         for(int j=0; j<fileKey.length; j++){
                            if(fileKey[j].equalsIgnoreCase(stats[keyIndex]))
