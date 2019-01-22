@@ -52,7 +52,7 @@ public class FileParser {
                         line = line.trim();
                         for (StatParser parser : parserList) {
                             if (parser.isMatchType(line)) {
-                                List<String> stats = new LinkedList<>(Arrays.asList(line.split(parser.regex)));
+                                List<String> stats = (new ArrayList<>(Arrays.asList(line.split(parser.regex))));
                                 String name = stats.get(parser.getNameIndex());
 
                                 ListIterator<String> iter = stats.listIterator();

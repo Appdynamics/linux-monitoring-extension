@@ -14,8 +14,7 @@ import com.appdynamics.extensions.metrics.Metric;
 import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -84,8 +83,7 @@ public class NFSMountMetricsTask implements Runnable {
         List<Metric> metricData = new ArrayList<>();
 
         try {
-            p = rt.exec(new String[]{"bash", "-c", command[0]});
-            input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            input = new BufferedReader( new StringReader(String.join("\n", CommandExecutor.execute(new String[]{"bash", "-c", command[0]}))));
 
             logger.debug("Inside mountnfsStatus");
             FileParser parser = new FileParser(input, "mountedNFSStatus");
@@ -115,8 +113,6 @@ public class NFSMountMetricsTask implements Runnable {
             for(Map.Entry entry: parserStats.entrySet()){
                 metricData.addAll(stats.generateMetrics((Map<String, String>)entry.getValue(), "mountedNFSStatus", String.valueOf(entry.getKey())));
             }
-        } catch (IOException e) {
-            logger.error("Failed to run for NFS mount ", e);
         } catch (Exception e) {
             logger.error("Exception occurred collecting NFS mount metrics", e);
         }
@@ -131,9 +127,7 @@ public class NFSMountMetricsTask implements Runnable {
         BufferedReader reader;
         List<Metric> metricData = new ArrayList<>();
         try {
-            Process process = Runtime.getRuntime().exec(nfsIOStatsCmd);
-            process.waitFor();
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            reader = new BufferedReader( new StringReader(String.join("\n", CommandExecutor.execute(new String[]{nfsIOStatsCmd}))));
 
             FileParser parser = new FileParser(reader, "nfsIOStats");
 
@@ -159,8 +153,6 @@ public class NFSMountMetricsTask implements Runnable {
             for(Map.Entry entry: parserStats.entrySet()){
                 metricData.addAll(stats.generateMetrics((Map<String, String>)entry.getValue(), "nfsIOStats", String.valueOf(entry.getKey())));
             }
-        }catch (IOException ex) {
-            logger.error("Failed to run '" + nfsIOStatsCmd + "' for NFS I/O", ex);
         } catch (Exception e) {
             logger.error("Exception occurred collecting NFS I/O metrics", e);
         }
