@@ -75,7 +75,10 @@ public class Stats {
             FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_REGEX) {
                 @Override
                 boolean isMatchType(String line) {
-                    return  isFiltered(line, cpuIncludes) && line.startsWith("cpu");
+                    String pattern = "cpu[0-9]";
+                    Pattern checkRegex = Pattern.compile(pattern);
+                    Matcher regexMatcher = checkRegex.matcher(line.split(" ")[0]);
+                    return  isFiltered(line, cpuIncludes) && regexMatcher.matches();
                 }
 
                 @Override
@@ -93,9 +96,17 @@ public class Stats {
             Metric countMetric = new Metric("CPU (Cores) Logical", String.valueOf(parserStats.entrySet().size()), metricPrefix + "|cpu|CPU (Cores) Logical" );
 
             metricData.add(countMetric);
+            reader.close();
         }catch(Exception e){
             logger.error("Exception fetching CPU metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream CPU metrics", e);
+            }
         }
+
         return metricData;
     }
 
@@ -137,6 +148,12 @@ public class Stats {
             }
         }catch(Exception e){
             logger.error("Exception fetching disk metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream disk stats metrics", e);
+            }
         }
         return metricData;
     }
@@ -175,6 +192,12 @@ public class Stats {
             }
         }catch(Exception e){
             logger.error("Exception fetching net metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream durnig net usage", e);
+            }
         }
 
         return metricData;
@@ -182,7 +205,7 @@ public class Stats {
 
     public List<Metric> getDiskUsage() {
         logger.debug("Fetching diskusage metricStats");
-        BufferedReader reader;
+        BufferedReader reader = null;
         Map<String, Object> stats = new HashMap<>();
         try {
             Process process = Runtime.getRuntime().exec(Constants.DISK_USAGE_CMD);
@@ -210,10 +233,14 @@ public class Stats {
             parser.addParser(statParser);
             stats = parser.getStats();
 
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             logger.error("Failed to run '" + Constants.DISK_USAGE_CMD + "' for disk usage", ex);
-        } catch (Exception e) {
-            logger.error("Exception occurred collecting disk usage metrics", e);
+        } finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream disk usage metrics", e);
+            }
         }
 
         return generateMetrics(stats, "diskUsageStats");
@@ -280,6 +307,14 @@ public class Stats {
             }
         }catch(Exception e) {
             logger.error("Exception collection metrics for file: ", e);
+        }finally {
+            try {
+                fhReader.close();
+                inodeReader.close();
+                dentriesReader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream file metrics", e);
+            }
         }
         return statsMetrics;
     }
@@ -304,6 +339,12 @@ public class Stats {
             metricData.addAll(generateMetrics(parser.getStats(), "loadAvgStats"));
         }catch(Exception e){
         logger.error("Exception fetching load metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream load metrics", e);
+            }
         }
         return metricData;
     }
@@ -319,6 +360,12 @@ public class Stats {
             metricData.addAll(generateMetrics(statsMap,"memStats"));
         }catch(Exception e){
             logger.error("Exception fetching load metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream mem metrics", e);
+            }
         }
         return metricData;
 
@@ -374,6 +421,12 @@ public class Stats {
             pageMetrics.addAll(generateMetrics(statsMap,"pageSwapStats"));
         }catch(Exception e){
             logger.error("Exception fetching swap metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream page swap metrics", e);
+            }
         }
         return pageMetrics;
     }
@@ -405,6 +458,12 @@ public class Stats {
             }
         }catch(Exception e){
             logger.error("Exception fetching process metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream proc metrics", e);
+            }
         }
 
         return procMetrics;
@@ -419,6 +478,12 @@ public class Stats {
             sockStats.addAll(generateMetrics(statsMap, "sockUsedStats"));
         }catch(Exception e){
             logger.error("Exception fetching socket metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream socket metrics", e);
+            }
         }
         return sockStats;
     }

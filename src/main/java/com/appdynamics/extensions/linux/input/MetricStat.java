@@ -18,13 +18,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MetricStat {
     @XmlAttribute
-    private String url;
-    @XmlAttribute
     private String name;
-    @XmlAttribute(name = "filter-name")
-    private String filterName;
-    @XmlAttribute(name = "keyValueSeparator")
-    private String keyValueSeparator;
     @XmlAttribute(name = "metric-type")
     private String metricType;
     @XmlAttribute
@@ -34,14 +28,6 @@ public class MetricStat {
     @XmlElement(name = "stat")
     public MetricStat[] metricStats;
 
-
-    public String getFilterName() {
-        return filterName;
-    }
-
-    public void setFilterName(String filterName) {
-        this.filterName = filterName;
-    }
 
     public String getName() {
         return name;
@@ -67,14 +53,6 @@ public class MetricStat {
         this.metricType = metricType;
     }
 
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
     public MetricStat[] getMetricStats() {
         return metricStats;
     }
@@ -89,14 +67,6 @@ public class MetricStat {
 
     public void setChildren(String children) {
         this.children = children;
-    }
-
-    public String getKeyValueSeparator() {
-        return keyValueSeparator;
-    }
-
-    public void setKeyValueSeparator(String keyValueSeparator) {
-        this.keyValueSeparator = keyValueSeparator;
     }
 
     @XmlRootElement
