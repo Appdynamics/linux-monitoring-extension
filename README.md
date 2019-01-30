@@ -208,7 +208,7 @@ Once the configuration is complete, you can kill the workbench and start the Mac
 
 ## Contributing
 
-Always feel free to fork and contribute any changes directly here on GitHub.
+Always feel free to fork and contribute any changes directly on [GitHub](https://github.com/Appdynamics/linux-monitoring-extension).
 
 ## Community
 
