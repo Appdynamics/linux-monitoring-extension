@@ -1,0 +1,7 @@
+acnfsops:/ibm/VAC_V7KU_01_replicated/paeb_uat mounted on /interfaces_uat:
+op/s rpc bklog
+0.07    0.00
+read:             ops/s   kB/s  kB/op retrans avg RTT (ms) avg exe (ms)
+0.000   0.040  91.656        0 (0.0%)  17.471  17.723
+write:             ops/s   kB/s  kB/op retrans avg RTT (ms) avg exe (ms)
+0.000   0.105  222.243        0 (0.0%)  2.411  5.591

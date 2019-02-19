@@ -8,9 +8,9 @@ metricPrefix: "Custom Metrics|Linux Monitor|"
 
 # An availability status for NFS mounts is reported by executing the command `df | grep <fileSystem> | wc -l`.
 # displayName: the name with which the metric is reported in AppD Metric Browser. If empty, metric is reported with fileSystem as its name.
-#mountedNFS:
-#      - fileSystem: "sda"
-#        displayName: "NFS1"
+mountedNFS:
+      - fileSystem: "tmpfs"
+        displayName: "NFS1"
 
 # "diskIncludes" to fetch disk statistics only for the configured.
 # Ex: ["*"] fetches all disks
@@ -18,7 +18,6 @@ metricPrefix: "Custom Metrics|Linux Monitor|"
 filters:
   diskIncludes: [".*"]
   cpuIncludes: [".*"]
-  mountedNFS: [".*"]
 
 # Replaces characters in metric name with the specified characters.
 # "replace" takes any regular expression

@@ -23,6 +23,8 @@ public class MetricStat {
     private String metricType;
     @XmlAttribute
     public String children;
+    @XmlAttribute
+    public String command;
     @XmlElement(name = "metric")
     private MetricConfig[] metricConfig;
     @XmlElement(name = "stat")
@@ -41,32 +43,8 @@ public class MetricStat {
         return metricConfig;
     }
 
-    public void setMetricConfig(MetricConfig[] metricConfig) {
-        this.metricConfig = metricConfig;
-    }
-
-    public String getMetricType() {
-        return metricType;
-    }
-
-    public void setMetricType(String metricType) {
-        this.metricType = metricType;
-    }
-
-    public MetricStat[] getMetricStats() {
-        return metricStats;
-    }
-
-    public void setMetricStats(MetricStat[] metricStats) {
-        this.metricStats = metricStats;
-    }
-
-    public String getChildren() {
-        return children;
-    }
-
-    public void setChildren(String children) {
-        this.children = children;
+    public String getCommand() {
+        return command;
     }
 
     @XmlRootElement

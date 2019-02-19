@@ -6,6 +6,11 @@ metricPrefix: "Server|Component:<TIER_ID>|Custom Metrics|Linux Monitor|"
 #To find the <COMPONENT_ID> in your environment,
 #please follow the screenshot https://docs.appdynamics.com/display/PRO42/Build+a+Monitoring+Extension+Using+Java
 
+# NFS mounts for which mount data and its I/O data will be reported.
+# displayName: the name with which the metric is reported in AppD Metric Browser. If empty, metric is reported with fileSystem as its name.
+mountedNFS:
+      - fileSystem: "devfs"
+        displayName: "NFS1"
 
 # Filters to fetch data only for the configured.
 # Ex: ["*"] fetches all disks
@@ -13,7 +18,6 @@ metricPrefix: "Server|Component:<TIER_ID>|Custom Metrics|Linux Monitor|"
 filters:
   diskIncludes: [".*"]
   cpuIncludes: [".*"]
-  mountedNFS: [".*"]
 
 # Replaces characters in metric name with the specified characters.
 # "replace" takes any regular expression
@@ -27,11 +31,11 @@ metricCharacterReplacer:
 # number of concurrent tasks
 numberOfThreads: 5
 
-derivedMetrics:
-    - derivedMetricPath: "diskStats|I/O ops per sec"
-      formula: "(diskStats|reads completed successfully + diskStats|writes completed)/60"
-      collectDelta: "true"
-      metricType: "OBS.AVG.COL"
+#derivedMetrics:
+#    - derivedMetricPath: "diskStats|I/O ops per sec"
+#      formula: "(diskStats|reads completed successfully + diskStats|writes completed)/60"
+#      collectDelta: "true"
+#      metricType: "OBS.AVG.COL"
 
 #Files used by the extension to fetch monitoring data
 # /proc/stat

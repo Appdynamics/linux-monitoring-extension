@@ -114,6 +114,9 @@ public class LinuxMetricsTest {
                 Assert.fail("Unknown Metric " + metricName);
             }
         }
+        for(Map.Entry entry : diskExpectedValueMap.entrySet()){
+            System.out.println(entry.getKey()+":"+entry.getValue());
+        }
         Assert.assertTrue(diskExpectedValueMap.isEmpty());
     }
 
@@ -158,6 +161,7 @@ public class LinuxMetricsTest {
                 Assert.fail("Unknown Metric " + metricName);
             }
         }
+        Assert.assertTrue(memoryExpectedValueMap.isEmpty());
     }
 
     @Test
