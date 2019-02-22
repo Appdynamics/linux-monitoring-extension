@@ -86,6 +86,51 @@ public class NFSMountTest {
         mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|size (MB)", "65536");
         mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|available (MB)", "65536");
         mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|use %", "0%");
+        mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|Availability", "1");
+
+        try {
+            mockStatic(CommandExecutor.class);
+            List<String> lines = Files.readAllLines(Paths.get("src/test/resources/commandsOutputs/NFSMountOutput"));
+            when(CommandExecutor.execute(any(String[].class))).thenReturn(lines);
+        } catch (Exception e) {
+            logger.error("Exception mocking", e);
+        }
+
+        List<Map<String, String>> nfsMounts = (ArrayList<Map<String, String>>) contextConfiguration.getConfigYml().get("mountedNFS");
+
+        for(Map<String, String> mountedNFS : nfsMounts) {
+            for (Metric metric : nfsProcessor.getMountStatus(mountedNFS)) {
+
+                String actualValue = metric.getMetricValue();
+                String metricName = metric.getMetricPath();
+                if (mountedNFSExpectedValueMap.containsKey(metricName)) {
+                    String expectedValue = mountedNFSExpectedValueMap.get(metricName);
+                    Assert.assertEquals("The value of the metric " + metricName, expectedValue, actualValue);
+                    mountedNFSExpectedValueMap.remove(metricName);
+                } else {
+                    Assert.fail("Unknown Metric " + metricName);
+                }
+            }
+        }
+
+        Assert.assertTrue(mountedNFSExpectedValueMap.isEmpty());
+    }
+
+    @Test
+    public void testMountAvailability(){
+
+        Map<String, String> mountedNFSExpectedValueMap = Maps.newHashMap();
+
+        contextConfiguration.setConfigYml("src/test/resources/conf/mount-availability-test.yml");
+        nfsProcessor = Mockito.spy(new NFSMountMetricsTask(metricStat.getMetricStats(), contextConfiguration.getMetricPrefix(), contextConfiguration, metricWriter, phaser, new ArrayList<>()));
+
+
+        mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|used (MB)", "0");
+        mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|size (MB)", "65536");
+        mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|available (MB)", "65536");
+        mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|use %", "0%");
+        mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS1|Availability", "1");
+        mountedNFSExpectedValueMap.put("Custom Metrics|Linux Monitor|mountedNFSStatus|NFS2|Availability", "0");
 
         try {
             mockStatic(CommandExecutor.class);

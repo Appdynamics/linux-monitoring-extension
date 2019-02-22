@@ -11,6 +11,8 @@ metricPrefix: "Custom Metrics|Linux Monitor|"
 mountedNFS:
       - fileSystem: "/dev"
         displayName: "NFS1"
+      - fileSystem: "/randomMoount"
+        displayName: "NFS2"
 
 # "diskIncludes" to fetch disk statistics only for the configured.
 # Ex: ["*"] fetches all disks

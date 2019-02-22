@@ -41,6 +41,8 @@ public class NFSMountMetricsTask implements Runnable {
 
     private MetricStat[] metricStats;
 
+    private String metricPrefix;
+
     private List<Metric> metrics = new ArrayList<>();
 
     public NFSMountMetricsTask(MetricStat[] metricStats, String metricPrefix, MonitorContextConfiguration configuration, MetricWriteHelper metricWriteHelper, Phaser phaser, List<Map<String, String>> metricReplacer) {
@@ -48,6 +50,7 @@ public class NFSMountMetricsTask implements Runnable {
         this.metricWriteHelper = metricWriteHelper;
         this.metricStats = metricStats;
         this.phaser = phaser;
+        this.metricPrefix = metricPrefix;
         this.phaser.register();
 
         stats = new Stats(metricPrefix, metricStats, metricReplacer);
@@ -81,7 +84,7 @@ public class NFSMountMetricsTask implements Runnable {
         Process p = null;
         BufferedReader input = null;
         List<Metric> metricData = new ArrayList<>();
-
+        int available = 0;
         try {
             MetricConfig[] statArray = null;
             String command = "";
@@ -108,6 +111,11 @@ public class NFSMountMetricsTask implements Runnable {
                 boolean isBase(String[] stats) {
                     return false;
                 }
+
+                @Override
+                int getNameIndex(){
+                    return 5;
+                }
             };
             parser.addParser(statParser);
 
@@ -116,8 +124,10 @@ public class NFSMountMetricsTask implements Runnable {
             for(Map.Entry entry: parserStats.entrySet()){
                 if(entry.getKey().equals(mountedNFS.get("fileSystem"))) {
                     metricData.addAll(stats.generateMetrics((Map<String, String>) entry.getValue(), "mountedNFSStatus", mountedNFS.get("displayName")));
+                    available = 1;
                 }
             }
+            metricData.add(new Metric(mountedNFS.get("displayName") + "|Availability", String.valueOf(available), metricPrefix + "|mountedNFSStatus|" +mountedNFS.get("displayName") + "|Availability"));
         } catch (Exception e) {
             logger.error("Exception occurred collecting NFS mount metrics", e);
         }
