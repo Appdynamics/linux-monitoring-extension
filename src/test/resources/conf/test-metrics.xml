@@ -1,0 +1,158 @@
+<!--
+  ~ /*
+  ~   Copyright 2018. AppDynamics LLC and its affiliates.
+  ~   All Rights Reserved.
+  ~   This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
+  ~   The copyright notice above does not evidence any actual or intended publication of such source code.
+  ~  */
+  -->
+
+<!--
+aggregationType = AVERAGE | SUM | OBSERVATION
+timeRollUpType = AVERAGE | SUM | CURRENT
+clusterRollUpType = INDIVIDUAL | COLLECTIVE
+-->
+<!--
+Set delta = true for metric to report per-min data
+-->
+<metricStats>
+    <!-- Items in Nodes|<node> - data looked up from /api/nodes nodeDataMetric-->
+    <stat name="cpuStats" children="entries">
+        <metric attr="nice" alias="nice" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="system" alias="system" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="idle" alias="idle" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="iowait" alias="iowait" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+        <metric attr="irq" alias="irq" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="4"/>
+        <metric attr="softirq" alias="softirq" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="5"/>
+        <metric attr="steal" alias="steal" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="6"/>
+        <metric attr="guest" alias="guest" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="7"/>
+        <metric attr="guest_nice" alias="guest_nice" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="8"/>
+    </stat>
+    <stat name="pageStats" children="entries">
+        <metric attr="page" alias="page" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="page in" alias="page in" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="page out" alias="page out" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+    </stat>
+    <stat name="swapStats" children="entries">
+        <metric attr="swap" alias="swap" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="swap page in" alias="swap page in" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="swap page out" alias="swap page out" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+    </stat>
+    <stat name="pageSwapStats" children="entries">
+        <metric attr="pgpgin" alias="page in" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="pgpgout" alias="page out" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="pswpin" alias="swap page in" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="pswpout" alias="swap page out" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+        <metric attr="pgfaultt" alias="page fault" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="4"/>
+        <!--<metric attr="pgmajfault" alias="page major fault" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="5"/>-->
+    </stat>
+    <stat name="netStats" children="entries">
+        <metric attr="receive bytes" alias="receive bytes" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="receive packets" alias="receive packets" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="receive errs" alias="receive errs" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="receive drop" alias="receive drop" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+        <metric attr="receive compressed" alias="receive compressed" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="6"/>
+        <!--<metric attr="receive fifo" alias="receive fifo" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="4"/>
+        <metric attr="receive frame" alias="receive frame" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="5"/>
+        <metric attr="received multicast" alias="received multicast" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="7"/>-->
+        <metric attr="transmit bytes" alias="transmit bytes" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="8"/>
+        <metric attr="transmit packets" alias="transmit packets" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="9"/>
+        <metric attr="transmit errs" alias="transmit errs" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="10"/>
+        <metric attr="transmit drop" alias="transmit drop" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="11"/>
+        <metric attr="transmit compressed" alias="transmit compressed" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="15"/>
+        <!--<metric attr="transmit fifo" alias="transmit fifo" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="12"/>
+        <metric attr="transmit colls" alias="transmit colls" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="13"/>
+        <metric attr="transmit carrier" alias="transmit carrier" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="14"/>-->
+    </stat>
+    <stat name="diskStats" children="entries">
+        <metric attr="reads completed successfully" alias="reads completed successfully" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="reads merged" alias="reads merged" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+        <metric attr="sectors read" alias="sectors read" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="4"/>
+        <metric attr="time spent reading (ms)" alias="time spent reading (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="5"/>
+        <metric attr="writes completed" alias="writes completed" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="6"/>
+        <metric attr="writes merged" alias="writes merged" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="7"/>
+        <metric attr="sectors written" alias="sectors written" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="8"/>
+        <metric attr="time spent writing (ms)" alias="time spent writing (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="9"/>
+        <metric attr="I/Os currently in progress" alias="I/Os currently in progress" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="10"/>
+        <metric attr="time spent doing I/Os (ms)" alias="time spent doing I/Os (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="11"/>
+        <metric attr="weighted time spent doing I/Os (ms)" alias="weighted time spent doing I/Os (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="12"/>
+    </stat>
+    <stat name="diskUsageStats" children="entries">
+        <metric attr="size (MB)" alias="size (MB)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="used (MB)" alias="used (MB)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="available (MB)" alias="available (MB)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="use %" alias="use %" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+    </stat>
+    <stat name="fileNRStats" children="entries">
+        <metric attr="fhalloc" alias="fhalloc" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="fhfree" alias="fhfree" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="fhmax" alias="fhmax" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+    </stat>
+    <stat name="inodeNRStats" children="entries">
+        <metric attr="inalloc" alias="inalloc" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="infree" alias="infree" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+    </stat>
+    <stat name="dentriesStats" children="entries">
+        <metric attr="dentries" alias="dentries" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="unused" alias="unused" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="agelimit" alias="agelimit" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="wantpages" alias="wantpages" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+    </stat>
+    <stat name="loadAvgStats" children="entries">
+        <metric attr="load avg (1 min)" alias="load avg (1 min)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="load avg (5 min)" alias="load avg (5 min)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="load avg (15 min)" alias="load avg (15 min)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+    </stat>
+    <stat name="memStats" children="entries">
+        <metric attr="MemTotal" alias="total" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="MemFree" alias="free" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="Buffers" alias="buffers" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="Cached" alias="cached" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+        <metric attr="SwapCached" alias="swap cached" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="4"/>
+        <metric attr="Active" alias="active" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="5"/>
+        <metric attr="Inactive" alias="inactive" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="6"/>
+        <metric attr="SwapTotal" alias="swap total" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="7"/>
+        <metric attr="SwapFree" alias="swap free" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="8"/>
+        <metric attr="Dirty" alias="dirty" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="9"/>
+        <metric attr="Writeback" alias="writeback" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="10"/>
+        <metric attr="Mapped" alias="mapped" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="11"/>
+        <metric attr="Slab" alias="slab" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="12"/>
+        <metric attr="CommitLimit" alias="commit limit" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="13"/>
+        <metric attr="Committed_AS" alias="committed_As" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="14"/>
+    </stat>
+    <stat name="procStats" children="entries">
+        <metric attr="processes" alias="processes" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="procs_running" alias="procs_running" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="procs_blocked" alias="procs_blocked" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+    </stat>
+    <stat name="procLoadAvgStats" children="entries">
+        <metric attr="runqueue" alias="runqueue" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="count" alias="count" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+    </stat>
+    <stat name="sockUsedStats" children="entries">
+        <metric attr="sockets:" alias="used" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="tcp:" alias="tcp|inuse" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="udp:" alias="udp|inuse" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="raw:" alias="raw|inuse" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="frag:" alias="ifrag|inuse" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+    </stat>
+    <stat name="mountedNFSStatus" children="entries" command= "df -P">
+        <metric attr="1K-blocks" alias="size (MB)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="0"/>
+        <metric attr="used (MB)" alias="used (MB)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="1"/>
+        <metric attr="available (MB)" alias="available (MB)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="2"/>
+        <metric attr="use %" alias="use %" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="3"/>
+    </stat>
+    <stat name="nfsIOStats" children="entries" command= "nfsiostat">
+        <metric attr="read|ops/s" alias="read|ops/s" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" multiplier="100" index="0"/>
+        <metric attr="read|kB/s" alias="read|kB/s" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" multiplier="100" index="1"/>
+        <metric attr="read|kB/op" alias="read|kB/op" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" multiplier="100" index="2"/>
+        <metric attr="read|avg RTT (ms)" alias="read|avg RTT (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="4"/>
+        <metric attr="read|avg exe (ms) " alias="read|avg exe (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="5"/>
+        <metric attr="write|ops/s" alias="write|ops/s" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" multiplier="100" index="6"/>
+        <metric attr="write|kB/s" alias="write|kB/s" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" multiplier="100" index="7"/>
+        <metric attr="write|kB/op" alias="write|kB/op" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" multiplier="100" index="8"/>
+        <metric attr="write|avg RTT (ms)" alias="write|avg RTT (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="10"/>
+        <metric attr="write|avg exe (ms) " alias="write|avg exe (ms)" aggregationType = "AVERAGE" timeRollUpType = "CURRENT" clusterRollUpType = "INDIVIDUAL" index="11"/>
+
+    </stat>
+</metricStats>

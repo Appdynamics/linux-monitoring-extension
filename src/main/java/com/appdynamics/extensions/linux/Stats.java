@@ -1,5 +1,5 @@
 /*
- * Copyright 2018. AppDynamics LLC and its affiliates.
+ * Copyright 2018. AppDynamics LLC and its `filiates.
  * All Rights Reserved.
  * This is unpublished proprietary source code of AppDynamics LLC and its affiliates.
  * The copyright notice above does not evidence any actual or intended publication of such source code.
@@ -7,11 +7,12 @@
 
 package com.appdynamics.extensions.linux;
 
-import com.appdynamics.extensions.linux.config.MountedNFS;
+import com.appdynamics.extensions.linux.input.MetricConfig;
+import com.appdynamics.extensions.linux.input.MetricStat;
+import com.appdynamics.extensions.metrics.Metric;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import org.apache.log4j.Logger;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -20,7 +21,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,38 +29,24 @@ import java.util.regex.Pattern;
 
 
 public class Stats {
-    public static final String IDENTIFIER = "_ID_";
-    private static final String STAT_PATH = "/proc/stat";
-    private static final String NET_STAT_PATH = "/proc/net/dev";
-    private static final String DISK_STAT_PATH = "/proc/diskstats";
-    private static final String MEM_STAT_PATH = "/proc/meminfo";
-    private static final String FILE_NR_STAT_PATH = "/proc/sys/fs/file-nr";
-    private static final String INODE_NR_STAT_PATH = "/proc/sys/fs/inode-nr";
-    private static final String DENTRIES_STAT_PATH = "/proc/sys/fs/dentry-state";
-    private static final String LOADAVG_STAT_PATH = "/proc/loadavg";
-    private static final String VM_STAT_PATH = "/proc/vmstat";
-    private static final String SOCK_STAT_PATH = "/proc/net/sockstat";
-
-    private static final String[] DISK_USAGE_CMD = {"bash", "-c", "exec df -mP 2>/dev/null"};
-    private static final String SPACE_REGEX = "[\t ]+";
-    private static final String SPACE_COLON_REGEX = "[\t :]+";
-
-    private static String[] MEM_FILE_STATS =
-            {"MemTotal", "MemFree", "Buffers", "Cached", "SwapCached", "Active", "Inactive", "SwapTotal", "SwapFree",
-                    "Dirty", "Writeback", "Mapped", "Slab", "CommitLimit", "Committed_AS"};
-    private static String[] PAGE_SWAP_FILE_STATS = {"pgpgin", "pgpgout", "pswpin", "pswpout", "pgfault", "pgmajfault"};
-    private static String[] PROC_FILE_STATS = {"processes", "procs_running", "procs_blocked"};
-    protected static Map<String, List<Map<String, String>>> allMetricsFromConfig = new HashMap<String, List<Map<String, String>>>();
 
     private static Logger logger  = Logger.getLogger(Stats.class);
 
+    private List<Map<String, String>> metricReplacer;
 
-    public Stats(List<Map<String, List<Map<String, String>>>> metrics) {
-        populateMetricsMap(metrics);
+    protected MetricStat[] metricStats;
+
+    private String metricPrefix;
+
+    private static ObjectMapper objectMapper = new ObjectMapper();
+
+    public Stats(String metricPrefix, MetricStat[] metricStats, List<Map<String, String>> metricReplacer) {
+        this.metricPrefix = metricPrefix;
+        this.metricReplacer = metricReplacer;
+        this.metricStats = metricStats;
     }
 
-
-    private BufferedReader getStream(String filePath) {
+    protected BufferedReader getStream(String filePath) {
         File file = new File(filePath);
         BufferedReader reader = null;
         try {
@@ -71,528 +57,446 @@ public class Stats {
         return reader;
     }
 
-    public List<MetricData> getCPUStats() {
-        BufferedReader reader = getStream(STAT_PATH);
-        FileParser parser = new FileParser(reader, "CPU", "CPU cores (logical)");
+    public List<Metric> getCPUStats(final List<String> cpuIncludes) {
 
-        String[] CPUStats = generateStatsArray("cpuStats");
+        logger.debug("Fetching CPU metricStats");
+        BufferedReader reader = getStream(Constants.STAT_PATH);
+        FileParser parser = new FileParser(reader, "CPU");
+        List<Metric> metricData = new ArrayList<>();
 
-        FileParser.StatParser statParser = new FileParser.StatParser(CPUStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("cpu");
+        try{
+            MetricConfig[] statArray = null;
+
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("cpuStats")) {
+                    statArray = metricStats[i].getMetricConfig();
+                }
             }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return stats[0].equals("cpu");
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return true;
-            }
-        };
-        parser.addParser(statParser);
-
-        return generateStatsMap(parser.getStats(), "cpuStats");
-    }
-
-    public List<MetricData> getDiskStats(final List<String> diskIncludes) {
-        BufferedReader reader = getStream(DISK_STAT_PATH);
-        logger.debug("Fetching disk stats for " + diskIncludes);
-        FileParser parser = new FileParser(reader, "disk", null);
-
-        String[] diskStats = generateStatsArray("diskStats");
-
-        FileParser.StatParser statParser = new FileParser.StatParser(diskStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return isDiskIncluded(line, diskIncludes);
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(statParser);
-
-        return generateStatsMap(parser.getStats(), "diskStats");
-    }
-
-    public List<MetricData> getNetStats() {
-        BufferedReader reader = getStream(NET_STAT_PATH);
-        FileParser parser = new FileParser(reader, "net", null);
-
-        String[] netStats = generateStatsArray("netStats");
-
-        FileParser.StatParser statParser = new FileParser.StatParser(netStats, SPACE_COLON_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return !line.contains("|");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return false;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(statParser);
-
-
-        return generateStatsMap(parser.getStats(), "netStats");
-    }
-
-    public List<MetricData> getDiskUsage() {
-        BufferedReader reader;
-        Map<String, Object> stats = new HashMap<String, Object>();
-        try {
-            Process process = Runtime.getRuntime().exec(DISK_USAGE_CMD);
-            process.waitFor();
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-
-
-            FileParser parser = new FileParser(reader, "disk usage", null);
-
-            String[] diskUsageStats = generateStatsArray("diskUsageStats");
-
-            FileParser.StatParser statParser = new FileParser.StatParser(diskUsageStats, SPACE_REGEX) {
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_REGEX) {
                 @Override
                 boolean isMatchType(String line) {
-                    return !line.startsWith("Filesystem") && !line.startsWith("none");
+                    String pattern = "cpu[0-9]";
+                    Pattern checkRegex = Pattern.compile(pattern);
+                    Matcher regexMatcher = checkRegex.matcher(line.split(" ")[0]);
+                    return  isFiltered(line, cpuIncludes) && regexMatcher.matches();
                 }
 
                 @Override
                 boolean isBase(String[] stats) {
-                    return true;
+                    return false;
+                }
+            };
+            parser.addParser(statParser);
+
+            Map<String, Object> parserStats = parser.getStats();
+
+            for(Map.Entry entry: parserStats.entrySet()){
+                metricData.addAll(generateMetrics((Map<String, String>)entry.getValue(), "cpuStats", String.valueOf(entry.getKey())));
+            }
+            Metric countMetric = new Metric("CPU (Cores) Logical", String.valueOf(parserStats.entrySet().size()), metricPrefix + "|cpu|CPU (Cores) Logical" );
+
+            metricData.add(countMetric);
+            reader.close();
+        }catch(Exception e){
+            logger.error("Exception fetching CPU metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream CPU metrics", e);
+            }
+        }
+
+        return metricData;
+    }
+
+    public List<Metric> getDiskStats(final List<String> diskIncludes) {
+        BufferedReader reader = getStream(Constants.DISK_STAT_PATH);
+        logger.debug("Fetching disk metricStats for " + diskIncludes);
+        FileParser parser = new FileParser(reader, "diskStats");
+        List<Metric> metricData = new ArrayList<>();
+
+        try {
+            MetricConfig[] statArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("diskStats")) {
+                    statArray = metricStats[i].getMetricConfig();
+                }
+            }
+
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return isFiltered(line, diskIncludes);
                 }
 
                 @Override
-                boolean isCountRequired() {
+                boolean isBase(String[] stats) {
+                    return false;
+                }
+
+                @Override
+                int getNameIndex(){
+                    return 2;
+                }
+            };
+            parser.addParser(statParser);
+            Map<String, Object> parserStats = parser.getStats();
+
+            for(Map.Entry entry: parserStats.entrySet()){
+                metricData.addAll(generateMetrics((Map<String, String>)entry.getValue(), "diskStats", String.valueOf(entry.getKey())));
+            }
+        }catch(Exception e){
+            logger.error("Exception fetching disk metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream disk stats metrics", e);
+            }
+        }
+        return metricData;
+    }
+
+    public List<Metric> getNetStats() {
+        logger.debug("Fetching net metricStats");
+        BufferedReader reader = getStream(Constants.NET_STAT_PATH);
+        FileParser parser = new FileParser(reader, "net");
+        List<Metric> metricData = new ArrayList<>();
+
+        try {
+            MetricConfig[] statArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("netStats")) {
+                    statArray = metricStats[i].getMetricConfig();
+                }
+            }
+
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_COLON_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return !line.contains("|");
+                }
+
+                @Override
+                boolean isBase(String[] stats) {
+                    return false;
+                }
+            };
+            parser.addParser(statParser);
+
+            Map<String, Object> parserStats = parser.getStats();
+
+            for(Map.Entry entry: parserStats.entrySet()){
+                metricData.addAll(generateMetrics((Map<String, String>)entry.getValue(), "netStats", String.valueOf(entry.getKey())));
+            }
+        }catch(Exception e){
+            logger.error("Exception fetching net metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream durnig net usage", e);
+            }
+        }
+
+        return metricData;
+    }
+
+    public List<Metric> getDiskUsage() {
+        logger.debug("Fetching diskusage metricStats");
+        BufferedReader reader = null;
+        Map<String, Object> stats = new HashMap<>();
+        try {
+            Process process = Runtime.getRuntime().exec(Constants.DISK_USAGE_CMD);
+            process.waitFor();
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            FileParser parser = new FileParser(reader, "disk usage");
+
+            MetricConfig[] statArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("diskUsageStats")) {
+                    statArray = metricStats[i].getMetricConfig();
+                }
+            }
+
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return !line.startsWith("Filesystem") && !line.startsWith("none");
+                }
+                @Override
+                boolean isBase(String[] stats) {
                     return false;
                 }
             };
             parser.addParser(statParser);
             stats = parser.getStats();
-            // Check, if use % metrics is already being created, then remove this code piece
-            /*
-            for (Map.Entry<String, Object> diskStats : stats.entrySet()) {
-                Map<String, Object> diskStat = (Map) diskStats.getValue();
-                String capacityValue = (String) diskStat.get("use %");
-                diskStat.put("use %", capacityValue.replace("%", "").trim());
-            }*/
-        } catch (IOException e) {
-            logger.error("Failed to run '" + DISK_USAGE_CMD + "' for disk usage");
-        } catch (Exception e) {
-            logger.error("Exception occurred collecting disk usage metrics", e);
+
+        } catch (Exception ex) {
+            logger.error("Failed to run '" + Constants.DISK_USAGE_CMD + "' for disk usage", ex);
+        } finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream disk usage metrics", e);
+            }
         }
 
-        return generateStatsMap(stats, "diskUsageStats");
+        return generateMetrics(stats, "diskUsageStats");
     }
 
-    public List<MetricData> getFileStats() {
-        BufferedReader fhReader = getStream(FILE_NR_STAT_PATH);
-        BufferedReader inodeReader = getStream(INODE_NR_STAT_PATH);
-        BufferedReader dentriesReader = getStream(DENTRIES_STAT_PATH);
+    public List<Metric> getFileStats() {
+        logger.debug("Fetching file metricStats");
+        BufferedReader fhReader = getStream(Constants.FILE_NR_STAT_PATH);
+        BufferedReader inodeReader = getStream(Constants.INODE_NR_STAT_PATH);
+        BufferedReader dentriesReader = getStream(Constants.DENTRIES_STAT_PATH);
 
-        List<MetricData> statsMetrics = new ArrayList<MetricData>();
+        List<Metric> statsMetrics = new ArrayList<Metric>();
 
         try {
-            String[] fileNRStats = generateStatsArray("fileNRStats");
-            FileParser parser = new FileParser(fhReader, "file handler", null);
-            FileParser.StatParser statParser = new FileParser.StatParser(fileNRStats, SPACE_REGEX) {
-                @Override
-                boolean isMatchType(String line) {
-                    return true;
+            logger.debug("Fetching File NR metricStats");
+            MetricConfig[] statArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("fileNRStats")) {
+                    statArray = metricStats[i].getMetricConfig();
                 }
-
-                @Override
-                boolean isBase(String[] stats) {
-                    return true;
-                }
-
-                @Override
-                boolean isCountRequired() {
-                    return false;
-                }
-            };
+            }
+            FileParser parser = new FileParser(fhReader, "file handler");
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_REGEX){};
             parser.addParser(statParser);
-            List<MetricData> metrics = generateStatsMap(parser.getStats(), "fileNRStats");
+            List<Metric> metrics = generateMetrics(parser.getStats(), "fileNRStats");
             if (metrics != null) {
                 statsMetrics.addAll(metrics);
             }
 
-            String[] inodeNRStats = generateStatsArray("inodeNRStats");
+            logger.debug("Fetching iNode NR Stats");
 
-            parser = new FileParser(inodeReader, "inode", null);
-            statParser = new FileParser.StatParser(inodeNRStats, SPACE_REGEX) {
-                @Override
-                boolean isMatchType(String line) {
-                    return true;
+            MetricConfig[] inodeStatArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("inodeNRStats")) {
+                    inodeStatArray = metricStats[i].getMetricConfig();
                 }
+            }
 
-                @Override
-                boolean isBase(String[] stats) {
-                    return true;
-                }
-
-                @Override
-                boolean isCountRequired() {
-                    return false;
-                }
+            parser = new FileParser(inodeReader, "inode");
+            statParser = new FileParser.StatParser(inodeStatArray, Constants.SPACE_REGEX) {
             };
             parser.addParser(statParser);
 
-            metrics = generateStatsMap(parser.getStats(), "iNodeNRStats");
+            metrics = generateMetrics(parser.getStats(), "iNodeNRStats");
             if (metrics != null) {
                 statsMetrics.addAll(metrics);
             }
 
+            logger.debug("Fetching dentries Stats");
 
-            String[] dentriesStats = generateStatsArray("dentriesStats");
-
-            parser = new FileParser(dentriesReader, "dcache", null);
-            statParser = new FileParser.StatParser(dentriesStats, SPACE_REGEX) {
-                @Override
-                boolean isMatchType(String line) {
-                    return true;
+            MetricConfig[] dentriesStats = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("dentriesStats")) {
+                    dentriesStats = metricStats[i].getMetricConfig();
                 }
+            }
 
-                @Override
-                boolean isBase(String[] stats) {
-                    return true;
-                }
-
-                @Override
-                boolean isCountRequired() {
-                    return false;
-                }
-            };
+            parser = new FileParser(dentriesReader, "dcache");
+            statParser = new FileParser.StatParser(dentriesStats, Constants.SPACE_REGEX) {};
             parser.addParser(statParser);
-            metrics = generateStatsMap(parser.getStats(), "dentriesStats");
+            metrics = generateMetrics(parser.getStats(), "dentriesStats");
             if (metrics != null) {
                 statsMetrics.addAll(metrics);
             }
         }catch(Exception e) {
             logger.error("Exception collection metrics for file: ", e);
+        }finally {
+            try {
+                fhReader.close();
+                inodeReader.close();
+                dentriesReader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream file metrics", e);
+            }
         }
         return statsMetrics;
     }
 
-    public List<MetricData> getLoadStats() {
-        BufferedReader reader = getStream(LOADAVG_STAT_PATH);
-
-        String[] loadAvgStats = generateStatsArray("loadAvgStats");
-
-        FileParser parser = new FileParser(reader, "load average", null);
-        FileParser.StatParser statParser = new FileParser.StatParser(loadAvgStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return true;
+    public List<Metric> getLoadStats() {
+        logger.debug("Fetching load Stats");
+        BufferedReader reader = getStream(Constants.LOADAVG_STAT_PATH);
+        List<Metric> metricData = new ArrayList<>();
+        try {
+            MetricConfig[] statArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("loadAvgStats")) {
+                    statArray = metricStats[i].getMetricConfig();
+                }
             }
 
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
+            FileParser parser = new FileParser(reader, "load average");
+            FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_REGEX) {
+            };
+            parser.addParser(statParser);
 
-            @Override
-            boolean isCountRequired() {
-                return false;
+            metricData.addAll(generateMetrics(parser.getStats(), "loadAvgStats"));
+        }catch(Exception e){
+        logger.error("Exception fetching load metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream load metrics", e);
             }
-        };
-        parser.addParser(statParser);
-
-        return generateStatsMap(parser.getStats(), "loadAvgStats");
+        }
+        return metricData;
     }
 
-    public List<MetricData> getMemStats() {
-        BufferedReader reader = getStream(MEM_STAT_PATH);
+    public List<Metric> getMemStats() {
+        logger.debug("Fetching Memory Stats");
+        BufferedReader reader = getStream(Constants.MEM_STAT_PATH);
+        List<Metric> metricData = new ArrayList<>();
+        try {
+            Map<String, Object> statsMap = getRowStats(reader, Constants.SPACE_COLON_REGEX,
+                    Constants.MEM_FILE_STATS, 0, 1);
 
-        String[] memStats = generateStatsArray("memStats");
+            metricData.addAll(generateMetrics(statsMap,"memStats"));
+        }catch(Exception e){
+            logger.error("Exception fetching load metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream mem metrics", e);
+            }
+        }
+        return metricData;
 
-        Map<String, Object> statsMap = getRowStats(reader, SPACE_COLON_REGEX,
-                MEM_FILE_STATS, memStats, "memory", 0, 1);
+    }
+
+    public List< Metric> getPageSwapStats() {
+        BufferedReader reader = getStream(Constants.STAT_PATH);
+        Map<String, Object> statsMap;
+        List<Metric> pageMetrics = new ArrayList<>();
+
+        try{
+            logger.debug("Fetching page metricStats");
+            MetricConfig[] pageStats = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("pageStats")) {
+                    pageStats = metricStats[i].getMetricConfig();
+                }
+            }
+
+            FileParser parser = new FileParser(reader, "page");
+            FileParser.StatParser pageParser = new FileParser.StatParser(pageStats, Constants.SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return line.startsWith("page");
+                }
+            };
+            parser.addParser(pageParser);
+
+            logger.debug("Fetching swap metricStats");
+            MetricConfig[] swapStats = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("swapStats")) {
+                    swapStats = metricStats[i].getMetricConfig();
+                }
+            }
+
+            FileParser.StatParser swapParser = new FileParser.StatParser(swapStats, Constants.SPACE_REGEX) {
+                @Override
+                boolean isMatchType(String line) {
+                    return line.startsWith("swap");
+                }
+            };
+            parser.addParser(swapParser);
+
+            logger.debug("Fetching pageSwap metricStats");
+            statsMap = parser.getStats();
+            if (statsMap == null) {  //page and swap are not in /proc/stat
+                reader = getStream(Constants.VM_STAT_PATH);
+                statsMap = getRowStats(reader, Constants.SPACE_REGEX, Constants.PAGE_SWAP_FILE_STATS, 0, 1);
+            }
+            pageMetrics.addAll(generateMetrics(statsMap,"pageStats"));
+            pageMetrics.addAll(generateMetrics(statsMap,"swapStats"));
+            pageMetrics.addAll(generateMetrics(statsMap,"pageSwapStats"));
+        }catch(Exception e){
+            logger.error("Exception fetching swap metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream page swap metrics", e);
+            }
+        }
+        return pageMetrics;
+    }
+
+    public List<Metric> getProcStats() {
+        BufferedReader reader = getStream(Constants.STAT_PATH);
+
+        List<Metric> procMetrics = new ArrayList<>();
 
         try {
-            Long total = Long.parseLong((String) statsMap.get("total"));
-            Long free = Long.parseLong((String) statsMap.get("free"));
-            Long used = total - free;
-            Long usedP = 100 * used / total;
-            Long swapTotal = Long.parseLong((String) statsMap.get("swap total"));
-            Long swapUsed = swapTotal - Long.parseLong((String) statsMap.get("swap free"));
-            Long realFree = free + Long.parseLong((String) statsMap.get("buffers"))
-                    + Long.parseLong((String) statsMap.get("cached"));
-            Long realFreeP = 100 * realFree / total;
-            Long swapUsedP = 0L;
-            if (swapTotal != 0) {
-                swapUsedP = 100 * swapUsed / swapTotal;
-            }
+            Map<String, Object> statsMap = getRowStats(reader, Constants.SPACE_REGEX, Constants.PROC_FILE_STATS,0, 1);
+            logger.debug("Fetching process metricStats");
+            procMetrics.addAll(generateMetrics(statsMap, "procStats"));
 
-            statsMap.put("used", used.toString());
-            statsMap.put("used %", usedP.toString());
-            statsMap.put("swap used", swapUsed.toString());
-            statsMap.put("swap used %", swapUsedP.toString());
-            statsMap.put("real free", realFree.toString());
-            statsMap.put("real free %", realFreeP.toString());
-        } catch (NumberFormatException e) {
-            logger.error("Failed to read some memory stats");
-        } catch (ArithmeticException e) {
-            logger.error("Error calculating additional memory stats");
+            reader = getStream(Constants.LOADAVG_STAT_PATH);
+            FileParser parser = new FileParser(reader, "process");
+
+            MetricConfig[] statsArray = null;
+            for(int i=0; i<metricStats.length; i++){
+                if(metricStats[i].getName().equalsIgnoreCase("procStats")) {
+                    statsArray = metricStats[i].getMetricConfig();
+                }
+            }
+            FileParser.StatParser statParser = new FileParser.StatParser(statsArray, Constants.SPACE_REGEX + "|/") {};
+            parser.addParser(statParser);
+            Map<String, Object> map = parser.getStats();
+            if (map != null) {
+                procMetrics.addAll(generateMetrics(map, "procLoadAvgStats"));
+            }
+        }catch(Exception e){
+            logger.error("Exception fetching process metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream proc metrics", e);
+            }
         }
 
-        List<MetricData> metricStats = new ArrayList<MetricData>();
-
-        metricStats.addAll(generateStatsMap(statsMap,"memStats"));
-
-        return metricStats;
-
+        return procMetrics;
     }
 
-    public List< MetricData> getPageSwapStats() {
-        BufferedReader reader = getStream(STAT_PATH);
-        Map<String, Object> statsMap;
-
-        String[] pageStats = generateStatsArray("pageStats");
-        String[] swapStats = generateStatsArray("swapStats");
-        String[] pageSwapStats = generateStatsArray("pageSwapStats");
-
-
-        FileParser parser = new FileParser(reader, "page", null);
-        FileParser.StatParser pageParser = new FileParser.StatParser(pageStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("page");
+    public List<Metric> getSockStats() {
+        BufferedReader reader = getStream(Constants.SOCK_STAT_PATH);
+        logger.debug("Fetching socket metricStats");
+        List<Metric> sockStats = new ArrayList<>();
+        try {
+            Map<String, Object> statsMap = getRowStats(reader, Constants.SPACE_REGEX, Constants.SOCK_STATS,0, 2);
+            sockStats.addAll(generateMetrics(statsMap, "sockUsedStats"));
+        }catch(Exception e){
+            logger.error("Exception fetching socket metricStats", e);
+        }finally {
+            try {
+                reader.close();
+            }catch (Exception e) {
+                logger.error("Exception occurred closing stream socket metrics", e);
             }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(pageParser);
-        FileParser.StatParser swapParser = new FileParser.StatParser(swapStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("swap");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(swapParser);
-
-        statsMap = parser.getStats();
-        if (statsMap == null) {  //page and swap are not in /proc/stat
-            reader = getStream(VM_STAT_PATH);
-            statsMap = getRowStats(reader, SPACE_REGEX, PAGE_SWAP_FILE_STATS, pageSwapStats, "page and swap", 0, 1);
         }
-
-        List<MetricData> metricStats = new ArrayList<MetricData>();
-
-        metricStats.addAll(generateStatsMap(statsMap,"pageStats"));
-        metricStats.addAll(generateStatsMap(statsMap,"swapStats"));
-        metricStats.addAll(generateStatsMap(statsMap,"pageSwapFileStats"));
-        metricStats.addAll(generateStatsMap(statsMap,"pageSwapStats"));
-
-        return metricStats;
-    }
-
-    public List<MetricData> getProcStats() {
-        BufferedReader reader = getStream(STAT_PATH);
-
-        List<MetricData> metricStats = new ArrayList<MetricData>();
-
-       String[] procStats = generateStatsArray("procStats");
-        String[] procLoadAvgStats = generateStatsArray("procLoadAvgStats");
-
-        Map<String, Object> statsMap = getRowStats(reader, SPACE_REGEX, PROC_FILE_STATS, procStats, "process", 0, 1);
-
-        metricStats.addAll(generateStatsMap(statsMap,"procStats"));
-
-        reader = getStream(LOADAVG_STAT_PATH);
-
-        FileParser parser = new FileParser(reader, "process", null);
-        FileParser.StatParser statParser = new FileParser.StatParser(procLoadAvgStats, SPACE_REGEX + "|/") {
-            @Override
-            boolean isMatchType(String line) {
-                return true;
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(statParser);
-        Map<String, Object> map = parser.getStats();
-        if (map != null) {
-            metricStats.addAll(generateStatsMap(map,"procLoadAvgStats"));
-        }
-
-        return metricStats;
-    }
-
-    public List<MetricData> getSockStats() {
-        BufferedReader reader = getStream(SOCK_STAT_PATH);
-
-        List<MetricData> metricStats = new ArrayList<MetricData>();
-
-        String[] sockUsedStats = generateStatsArray("sockUsedStats");
-        String[] tcpInuseStats = generateStatsArray("tcpInuseStats");
-        String[] udpInuseStats = generateStatsArray("udpInuseStats");
-        String[] rawInuseStats = generateStatsArray("rawInuseStats");
-        String[] ipfragStats = generateStatsArray("ipfragStats");
-
-        FileParser parser = new FileParser(reader, "socket", null);
-        FileParser.StatParser sockParser = new FileParser.StatParser(sockUsedStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("sockets");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(sockParser);
-        metricStats.addAll(generateStatsMap(parser.getStats(),"sockUsedStats"));
-
-        reader = getStream(SOCK_STAT_PATH);
-        parser = new FileParser(reader, "socket", null);
-        FileParser.StatParser tcpParser = new FileParser.StatParser(tcpInuseStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("TCP");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(tcpParser);
-        metricStats.addAll(generateStatsMap(parser.getStats(),"tcpInuseStats"));
-
-        reader = getStream(SOCK_STAT_PATH);
-        parser = new FileParser(reader, "socket", null);
-        FileParser.StatParser udpParser = new FileParser.StatParser(udpInuseStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("UDP:");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(udpParser);
-        metricStats.addAll(generateStatsMap(parser.getStats(),"udpInuseStats"));
-
-        reader = getStream(SOCK_STAT_PATH);
-        parser = new FileParser(reader, "socket", null);
-        FileParser.StatParser rawParser = new FileParser.StatParser(rawInuseStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("RAW");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(rawParser);
-        metricStats.addAll(generateStatsMap(parser.getStats(),"rawInuseStats"));
-
-        reader = getStream(SOCK_STAT_PATH);
-        parser = new FileParser(reader, "socket", null);
-        FileParser.StatParser ipfragParser = new FileParser.StatParser(ipfragStats, SPACE_REGEX) {
-            @Override
-            boolean isMatchType(String line) {
-                return line.startsWith("FRAG");
-            }
-
-            @Override
-            boolean isBase(String[] stats) {
-                return true;
-            }
-
-            @Override
-            boolean isCountRequired() {
-                return false;
-            }
-        };
-        parser.addParser(ipfragParser);
-        metricStats.addAll(generateStatsMap(parser.getStats(),"ipfragStats"));
-
-        return metricStats;
+        return sockStats;
     }
 
 
-    protected static Map<String, Object> getRowStats(BufferedReader reader, String splitRegex,
-                                            String[] fileKey, String[] statsKey,
-                                            String description, int keyIndex, int valIndex) {
+    protected Map<String, Object> getRowStats(BufferedReader reader, String splitRegex,
+                                            String[] fileKey,
+                                            int keyIndex, int valIndex) {
         Map<String, Object> statsMap = null;
         if (reader == null) {
-            logger.error("Failed to read " + description + " stats as reader is null");
+            logger.error("Failed to read metricStats as reader is null");
         } else {
-            statsMap = new HashMap<String, Object>();
-
-            Map<String, String> keyMap = new HashMap<String, String>();
-            for (int i = 0; i < fileKey.length && i < statsKey.length; i++) {
-                keyMap.put(fileKey[i], statsKey[i]);
-            }
+            statsMap = new HashMap<>();
 
             try {
                 try {
@@ -600,142 +504,91 @@ public class Stats {
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
                         String[] stats = line.split(splitRegex);
-                        String name = keyMap.get(stats[keyIndex]);
-                        if (name != null) {
-                            statsMap.put(name, stats[valIndex]);
+                        String name = null;
+                        for(int j=0; j<fileKey.length; j++){
+                           if(fileKey[j].equalsIgnoreCase(stats[keyIndex]))
+                              name = fileKey[j];
                         }
+                        if (name != null)
+                            statsMap.put(name, stats[valIndex]);
                     }
                 } finally {
                     reader.close();
                 }
             } catch (IOException e) {
-                logger.error("Failed to read " + description + " stats: " + e.getStackTrace());
+                logger.error("Failed to read metricStats: ", e);
             }
         }
-
         return statsMap;
     }
 
-    public List<MetricData> getMountStatus(MountedNFS[] mountedNFS) {
+    protected List<Metric> generateMetrics(Map<String, Object> statsMap, String metricName){
 
-        Map<String, Object> mountStatsMap = Maps.newHashMap();
-        NFSMountStatusProcessor statusProcessor = new NFSMountStatusProcessor();
-        for (MountedNFS fileSystem : mountedNFS) {
-            String status = statusProcessor.execute(fileSystem.getFileSystem());
-
-            if (!Strings.isNullOrEmpty(status)) {
-                if (!Strings.isNullOrEmpty(fileSystem.getDisplayName())) {
-                    mountStatsMap.put(fileSystem.getDisplayName(), status);
-                } else {
-                    mountStatsMap.put(fileSystem.getFileSystem(), status);
-                }
-            }
-        }
-        return generateStatsMap(mountStatsMap,"mountedNFSStatus");
-
-    }
-
-    public List<MetricData> getMountIOStats(MountedNFS[] mountedNFS) {
-
-        List<MetricData> ioStats = new ArrayList<MetricData>();
-
-        NFSMountStatusProcessor statusProcessor = new NFSMountStatusProcessor();
-        for (MountedNFS fileSystem : mountedNFS) {
-            Map<String,Object> statsMap = statusProcessor.getNFSMetrics(fileSystem);
-
-            List<MetricData> metricStats = new ArrayList<MetricData>();
-
-            for(Map.Entry statsEntry : statsMap.entrySet()) {
-
-                for (Map<String, String> metrics : Stats.allMetricsFromConfig.get("nfsIOStats")) {
-
-                    if (metrics.get("name").equalsIgnoreCase(String.valueOf(statsEntry.getKey()))) {
-
-                        MetricData metricData = new MetricData();
-                        metricData.setStats(statsEntry.getValue());
-                        metricData.setName(fileSystem.getDisplayName() + "|" + metrics.get("name"));
-                        metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
-                        metricData.setMetricType(metrics.get("metricType"));
-
-                        metricStats.add(metricData);
-                    }
-                }
-            }
-            ioStats.addAll(metricStats);
-
-        }
-        return ioStats;
-
-    }
-
-    private void populateMetricsMap(List<Map<String, List<Map<String, String>>>> metrics){
-        for(Map<String, List<Map<String, String>>> metricsConfigEntry: metrics){
-            allMetricsFromConfig.putAll(metricsConfigEntry);
-        }
-    }
-
-    protected static String[] generateStatsArray(String metricName){
-
-        logger.debug("Generating Stats Array for metric: " + metricName);
-
-        String[] stats = new String[allMetricsFromConfig.get(metricName).size()+1];
-        int index = 0;
-        for(Map<String,String> metricsEntry: allMetricsFromConfig.get(metricName)){
-            stats[index++] = metricsEntry.get("name");
-        }
-        return Arrays.stream(stats)
-                .filter(s -> (s != null && s.length() > 0))
-                .toArray(String[]::new);
-    }
-
-    protected static List<MetricData> generateStatsMap(Map<String, Object> statsMap, String metricName){
-
-        List<MetricData> metricStats = new ArrayList<MetricData>();
+        List<Metric> metricDataList = new ArrayList<>();
+        MetricConfig[] metricConfig = null;
         if(statsMap!=null) {
             for (Map.Entry<String, Object> statsEntry : statsMap.entrySet()) {
-                List<Map<String, String>> metricConfig = allMetricsFromConfig.get(metricName);
-                if(metricConfig!=null) {
 
-                    for (Map<String, String> metrics : metricConfig) {
-
-                         if (metrics != null && metrics.get("name").equalsIgnoreCase(statsEntry.getKey())) {
-                            MetricData metricData = new MetricData();
-                            metricData.setStats(statsEntry.getValue());
-                            metricData.setName(metrics.get("name"));
-                            metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
-                            metricData.setMetricType(metrics.get("metricType"));
-
-                            metricStats.add(metricData);
-                        }
-                        if (metricName.equalsIgnoreCase("mountedNFSStatus")) {
-
-                            MetricData metricData = new MetricData();
-                            metricData.setStats(statsEntry.getValue());
-                            metricData.setName(statsEntry.getKey() + "|" + metrics.get("name"));
-                            metricData.setCollectDelta(Boolean.valueOf(metrics.get("collectDelta")));
-                            metricData.setMetricType(metrics.get("metricType"));
-
-                            metricStats.add(metricData);
-                        }
+                for(int i=0; i<metricStats.length; i++){
+                    if(metricStats[i].getName().equalsIgnoreCase(metricName)) {
+                        metricConfig = metricStats[i].getMetricConfig();
+                    }
+                }
+                for (MetricConfig metrics : metricConfig) {
+                    if (metrics != null && metrics.getAttr().equalsIgnoreCase(statsEntry.getKey())) {
+                        Map<String, String> propertiesMap = objectMapper.convertValue(metrics, Map.class);
+                        Metric metric = new Metric(metrics.getAttr(), replaceCharacter(String.valueOf(statsEntry.getValue())), metricPrefix + "|" + metricName + "|" + metrics.getAlias(), propertiesMap);
+                        metricDataList.add(metric);
                     }
                 }
             }
         }else{
-            logger.error("No stats found for: " + metricName);
+            logger.debug("No metricStats found for: " + metricName);
         }
+        logger.debug("Returning " + metricDataList.size() + " metrics for " + metricName);
 
-        return metricStats;
+        return metricDataList;
     }
 
-    public boolean isDiskIncluded(String line, List<String> diskIncludes) {
-        if (diskIncludes == null || diskIncludes.isEmpty()) {
+    protected List<Metric> generateMetrics(Map<String, String> statsMap, String metricName, String systemName){
+
+        List<Metric> metricDataList = new ArrayList<>();
+        MetricConfig[] metricConfig = null;
+        if(statsMap!=null) {
+            for (Map.Entry<String, String> statsEntry : statsMap.entrySet()) {
+
+                for(int i=0; i<metricStats.length; i++){
+                    if(metricStats[i].getName().equalsIgnoreCase(metricName)) {
+                        metricConfig = metricStats[i].getMetricConfig();
+                    }
+                }
+                for (MetricConfig metrics : metricConfig) {
+                    if (metrics != null && metrics.getAttr().equalsIgnoreCase(statsEntry.getKey())) {
+                        Map<String, String> propertiesMap = objectMapper.convertValue(metrics, Map.class);
+                        Metric metric = new Metric(systemName + "|" + metrics.getAttr(), replaceCharacter(String.valueOf(statsEntry.getValue())), metricPrefix + "|" + metricName + "|" +systemName + "|" + metrics.getAlias(), propertiesMap);
+
+                        metricDataList.add(metric);
+                    }
+                }
+            }
+        }else{
+            logger.debug("No metricStats found for: " + metricName);
+        }
+        logger.debug("Returning " + metricDataList.size() + " metrics for " + metricName);
+        return metricDataList;
+    }
+
+
+
+    public boolean isFiltered(String line, List<String> filterIncludes) {
+        if (filterIncludes == null || filterIncludes.isEmpty()) {
             return false;
         }
-        if (diskIncludes.contains("*")) {
+        if (filterIncludes.contains("*")) {
             return true;
         }
         Joiner joiner = Joiner.on("|");
-        String includePattern = joiner.join(diskIncludes);
+        String includePattern = joiner.join(filterIncludes);
         includePattern = "\\b(" + includePattern + ")\\b";
         Pattern pattern = Pattern.compile(includePattern);
         Matcher matcher = pattern.matcher(line);
@@ -743,5 +596,18 @@ public class Stats {
             return true;
         }
         return false;
+    }
+
+    private String replaceCharacter(String metric) {
+
+        for (Map chars : metricReplacer) {
+            String replace = (String) chars.get("replace");
+            String replaceWith = (String) chars.get("replaceWith");
+
+            if (metric.contains(replace)) {
+                metric = metric.replaceAll(replace, replaceWith);
+            }
+        }
+        return metric;
     }
 }

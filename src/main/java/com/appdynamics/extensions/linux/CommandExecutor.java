@@ -19,26 +19,26 @@ import java.util.List;
 public class CommandExecutor {
     private static Logger logger = Logger.getLogger(CommandExecutor.class);
 
-    public static List<String> execute(String command) {
+    public static List<String> execute(String[] command) {
         return init(command);
     }
 
-    public static List<String> init(String command) {
+    public static List<String> init(String[] command) {
         Process process;
         try {
-            logger.debug("Executing the command " + command);
+            logger.debug("Executing the command " + command[0]);
             process = Runtime.getRuntime().exec(command);
 
             new ErrorReader(process.getErrorStream()).start();
-            ResponseParser responseParser = new ResponseParser(process, command);
+            ResponseParser responseParser = new ResponseParser(process);
             responseParser.start();
             process.waitFor();
             responseParser.join();
             List<String> commandOutput = responseParser.getData();
-            logger.trace("Command Output: " + commandOutput);
+            logger.debug("Command Output: " + commandOutput);
             return commandOutput;
         } catch (Exception e) {
-            logger.error("Error while executing the process " + command, e);
+            logger.error("Error while executing the process " + command[0], e);
             return null;
         }
     }
@@ -46,12 +46,10 @@ public class CommandExecutor {
     public static class ResponseParser extends Thread {
 
         private Process process;
-        private String command;
         private List<String> data = new ArrayList<String>();
 
-        public ResponseParser(Process process, String command) {
+        public ResponseParser(Process process) {
             this.process = process;
-            this.command = command;
         }
 
         public void run() {
@@ -64,14 +62,14 @@ public class CommandExecutor {
                     data.add(line);
                 }
             } catch (Exception e) {
-                logger.error("Error while reading the input stream from the command " + command, e);
+                logger.error("Error while reading the input stream from the command ", e);
             } finally {
                 try {
                     input.close();
                 } catch (IOException e) {
                 }
                 if (process != null) {
-                    logger.trace("Destroying the process " + command);
+                    logger.trace("Destroying the process ");
                     process.destroy();
                 }
             }
