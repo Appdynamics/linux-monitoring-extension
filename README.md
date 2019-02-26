@@ -157,7 +157,7 @@ Note : Please make sure not to use tab (\t) while editing yaml files. You can va
 |used 							|Used sockets
 
 ### Metric Category: mountedNFSStatus
-An availability status for any external network file system (NFS) mounts is reported by executing the command `df | grep <fileSystem> | wc -l`.
+In addition to the above metrics for configured mounts, an availability metrics for any external network file system (NFS) mount is reported as well.
 |------------------------------	|------------|
 |1K-blocks 							|Number of 1-K blocks
 |used (MB) 							|Used space
@@ -181,41 +181,40 @@ The storage metrics for any external network file system (NFS) mounts is reporte
 |wops/s                         |The number of write operations per second issued to the filesystem.
 
 
-Note : By default, a Machine agent or a AppServer agent can send a fixed number of metrics to the controller. To change this limit, please follow the instructions mentioned [here](http://docs.appdynamics.com/display/PRO14S/Metrics+Limits).
-For eg.
-```
-    java -Dappdynamics.agent.maxMetrics=2500 -jar machineagent.jar
-```
+## Credentials Encryption
+Please visit [this page](https://community.appdynamics.com/t5/Knowledge-Base/How-to-use-Password-Encryption-with-Extensions/ta-p/29397) to get detailed instructions on password encryption. The steps in this document will guide you through the whole process.
 
-## Workbench
+## Extensions Workbench
+Workbench is an inbuilt feature provided with each extension in order to assist you to fine tune the extension setup before you actually deploy it on the controller. Please review the following document on [How to use the Extensions WorkBench](https://community.appdynamics.com/t5/Knowledge-Base/How-to-use-the-Extensions-WorkBench/ta-p/30130)
 
-Workbench is a feature by which you can preview the metrics before registering it with the controller. This is useful if you want to fine tune the configurations. Workbench is embedded into the extension jar.
-To use the workbench
-Follow all the installation steps
-Start the workbench with the command
-      java -jar /monitors/LinuxMonitor/linux-monitoring-extension.jar
-   
+## Troubleshooting
+Please follow the steps listed in this [troubleshooting-document](https://community.appdynamics.com/t5/Knowledge-Base/How-to-troubleshoot-missing-custom-metrics-or-extensions-metrics/ta-p/28695) in order to troubleshoot your issue. These are a set of common issues that customers might have faced during the installation of the extension. If these don't solve your issue, please follow the last step on the [troubleshooting-document](https://community.appdynamics.com/t5/Knowledge-Base/How-to-troubleshoot-missing-custom-metrics-or-extensions-metrics/ta-p/28695) to contact the support team.
 
-This starts an http server at http://host:9090/. This can be accessed from the browser.
-If the server is not accessible from outside/browser, you can use the following end points to see the list of registered metrics and errors.
-#Get the metricStats
-    curl http://localhost:9090/api/metricStats
-    #Get the registered metrics
-    curl http://localhost:9090/api/metric-paths
-You can make the changes to config.yml and validate it from the browser or the API
-Once the configuration is complete, you can kill the workbench and start the Machine Agent.
+## Support Tickets
+If after going through the [Troubleshooting Document](https://community.appdynamics.com/t5/Knowledge-Base/How-to-troubleshoot-missing-custom-metrics-or-extensions-metrics/ta-p/28695) you have not been able to get your extension working, please file a ticket and add the following information.
+
+Please provide the following in order for us to assist you better.
+
+    1. Stop the running machine agent.
+    2. Delete all existing logs under <MachineAgent>/logs.
+    3. Please enable debug logging by editing the file <MachineAgent>/conf/logging/log4j.xml. Change the level value of the following <logger> elements to debug.
+        <logger name="com.singularity">
+        <logger name="com.appdynamics">
+    4. Start the machine agent and please let it run for 10 mins. Then zip and upload all the logs in the directory <MachineAgent>/logs/*.
+    5. Attach the zipped <MachineAgent>/conf/* directory here.
+    6. Attach the zipped <MachineAgent>/monitors/ExtensionFolderYouAreHavingIssuesWith directory here.
+
+For any support related questions, you can also contact help@appdynamics.com.
 
 
 ## Contributing
 
-Always feel free to fork and contribute any changes directly on [GitHub](https://github.com/Appdynamics/linux-monitoring-extension).
+Always feel free to fork and contribute any changes directly here on [GitHub](https://github.com/Appdynamics/apache-monitoring-extension/).
 
-## Community
-
-Find out more in the [AppSphere] (http://www.appdynamics.com/community/exchange/extension/linux-monitoring-extension) community.
-
-## Support
-
-For any questions or feature request, please contact [AppDynamics Support](mailto:help@appdynamics.com).
-
-
+## Version
+|          Name            |  Version   |
+|--------------------------|------------|
+|Extension Version         |2.1.1       |
+|Controller Compatibility  |4.5.0       |
+|Product Tested On         |Ubuntu 16.04|
+|Last Update               |05/14/2018  |
