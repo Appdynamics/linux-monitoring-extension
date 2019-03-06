@@ -56,7 +56,7 @@ Note : Please make sure not to use tab (\t) while editing yaml files. You can va
 |Metric Name            	|Description|
 |------------------------------	|------------|
 |I/Os currently in progress		|Current I/O operations	
-|reads completed successfully 	|Number of successfull reads
+|reads completed successfully 	|Number of successful reads
 |reads merged					|Reads merged
 |sectord read 					|Sectors read
 |sectors written 				|Sectors written 
@@ -170,15 +170,11 @@ The storage metrics for any external network file system (NFS) mounts is reporte
 
 |Metric Name            	|Description|
 |------------------------------	|------------|
-|rkB_nor/s 						|The number of blocks read by applications using the NFS mount
-|WkB_nor/s                      |The number of blocks written by applications using the NFS mount
-|rkB_dir/s 		                |The number of blocks read from files opened with the O_DIRECT flag
-|WkB_dir/s                      |The number of blocks written from files opened with the O_DIRECT flag
-|rkB_svr/s 						|The number blocks read from the NFS server by the NFS client
-|WkB_svr/s                      |The number blocks written from the NFS server by the NFS client
-|ops/s                          |The number of operations per second issued to the filesystem.
-|rops/s                         |The number of read operations per second issued to the filesystem.
-|wops/s                         |The number of write operations per second issued to the filesystem.
+|op/s   						|This is the number of operations per second.
+|kB/s                           |This is the number of kB written/read per second.
+|kB/op                          |This is the number of kB written/read per each operation.
+|avg RTT (ms)                   |This is the duration from the time that client’s kernel sends the RPC request until the time it receives the reply.
+|avg exe (ms)                   |This is the duration from the time that NFS client does the RPC request to its kernel until the RPC request is completed, this includes the RTT time above.
 
 
 ## Credentials Encryption
@@ -217,4 +213,4 @@ Always feel free to fork and contribute any changes directly here on [GitHub](ht
 |Extension Version         |2.1.1       |
 |Controller Compatibility  |4.5.0       |
 |Product Tested On         |Ubuntu 16.04|
-|Last Update               |05/14/2018  |
+|Last Update               |03/06/2019  |
