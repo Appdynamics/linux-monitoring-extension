@@ -158,6 +158,8 @@ Note : Please make sure not to use tab (\t) while editing yaml files. You can va
 
 ### Metric Category: mountedNFSStatus
 In addition to the above metrics for configured mounts, an availability metrics for any external network file system (NFS) mount is reported as well.
+
+|Metric Name                |Description|
 |------------------------------	|------------|
 |1K-blocks 							|Number of 1-K blocks
 |used (MB) 							|Used space
