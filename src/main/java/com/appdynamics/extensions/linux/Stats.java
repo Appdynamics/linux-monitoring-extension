@@ -70,7 +70,7 @@ public class Stats {
             FileParser.StatParser statParser = new FileParser.StatParser(statArray, Constants.SPACE_REGEX) {
                 @Override
                 boolean isMatchType(String line) {
-                    String pattern = "cpu[0-9]";
+                    String pattern = "cpu.*";
                     Pattern checkRegex = Pattern.compile(pattern);
                     Matcher regexMatcher = checkRegex.matcher(line.split(" ")[0]);
                     return  isFiltered(line, cpuIncludes) && regexMatcher.matches();
