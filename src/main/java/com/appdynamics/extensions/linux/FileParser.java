@@ -12,13 +12,7 @@ import org.apache.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 
@@ -44,7 +38,6 @@ public class FileParser {
             logger.error("Failed to read " + description + " metricStats as reader is null");
         } else {
             statsMap = new HashMap<>();
-            Pattern pattern = Pattern.compile("^([0-9])");
             try {
                 try {
                     String line;
@@ -55,9 +48,12 @@ public class FileParser {
                                 List<String> stats = (new ArrayList<>(Arrays.asList(line.split(parser.regex))));
                                 String name = stats.get(parser.getNameIndex());
 
+
+
                                 ListIterator<String> iter = stats.listIterator();
                                 while(iter.hasNext()){
-                                    if(!(pattern.matcher(iter.next()).find())){
+                                    String s = iter.next();
+                                    if(!(Pattern.matches("^[0-9]\\d*(\\.\\d+)?$", s)) && !(Pattern.matches("\\d+(?:\\.\\d+)?%", s))){
                                         iter.remove();
                                     }
                                 }
