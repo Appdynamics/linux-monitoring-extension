@@ -6,7 +6,8 @@
  */
 package com.appdynamics.extensions.linux;
 
-import org.apache.log4j.Logger;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.List;
 
 
 public class CommandExecutor {
-    private static Logger logger = Logger.getLogger(CommandExecutor.class);
+    private static Logger logger = ExtensionsLoggerFactory.getLogger(CommandExecutor.class);
 
     public static List<String> execute(String[] command) {
         return init(command);
@@ -83,7 +84,7 @@ public class CommandExecutor {
 
 
     public static class ErrorReader extends Thread {
-        public static final Logger logger = Logger.getLogger(ErrorReader.class);
+        public static final Logger logger = ExtensionsLoggerFactory.getLogger(ErrorReader.class);
 
 
         private final InputStream in;

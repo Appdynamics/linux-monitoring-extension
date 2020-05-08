@@ -10,8 +10,9 @@ package com.appdynamics.extensions.linux;
 import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
 import com.appdynamics.extensions.linux.input.MetricStat;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.appdynamics.extensions.metrics.Metric;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -25,7 +26,7 @@ import java.util.concurrent.Phaser;
  */
 public class LinuxMetricsTask implements Runnable {
 
-    public static final Logger logger = Logger.getLogger(LinuxMetricsTask.class);
+    public static final Logger logger = ExtensionsLoggerFactory.getLogger(LinuxMetricsTask.class);
 
     private MonitorContextConfiguration configuration;
 
