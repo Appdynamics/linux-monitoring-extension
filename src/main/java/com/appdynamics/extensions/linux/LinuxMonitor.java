@@ -10,7 +10,10 @@ package com.appdynamics.extensions.linux;
 import com.appdynamics.extensions.ABaseMonitor;
 import com.appdynamics.extensions.TasksExecutionServiceProvider;
 import com.appdynamics.extensions.linux.input.MetricStat;
+import com.appdynamics.extensions.util.AssertUtils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 
@@ -38,10 +41,8 @@ public class LinuxMonitor extends ABaseMonitor {
     }
 
 
-    @Override
-    protected int getTaskCount() {
-        // Always run on only 1 machine.
-        return 1;
+    protected List<Map<String, ?>> getServers() {
+        return new ArrayList<Map<String, ?>>();
     }
 
 

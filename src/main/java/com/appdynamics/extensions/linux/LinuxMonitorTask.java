@@ -5,8 +5,8 @@ import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.TasksExecutionServiceProvider;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
 import com.appdynamics.extensions.linux.input.MetricStat;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -17,7 +17,7 @@ import java.util.concurrent.Phaser;
  */
 public class LinuxMonitorTask implements AMonitorTaskRunnable {
 
-    private static final Logger logger = LoggerFactory.getLogger(LinuxMonitorTask.class);
+    private static final Logger logger = ExtensionsLoggerFactory.getLogger(LinuxMonitorTask.class);
 
     private MonitorContextConfiguration configuration;
 
