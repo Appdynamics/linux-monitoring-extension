@@ -212,7 +212,8 @@ Always feel free to fork and contribute any changes directly here on [GitHub](ht
 ## Version
 |          Name            |  Version   |
 |--------------------------|------------|
-|Extension Version         |2.1.1       |
-|Controller Compatibility  |4.5.0       |
+|Extension Version         |2.1.3       |
+|Controller Compatibility  |4.5 or Later|
+|Machine Agent Version     |4.5.13+     |
 |Product Tested On         |Ubuntu 16.04|
-|Last Update               |03/06/2019  |
+|Last Update               |05/08/2020  |

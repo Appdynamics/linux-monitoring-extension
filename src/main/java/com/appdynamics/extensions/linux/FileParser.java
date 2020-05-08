@@ -8,7 +8,8 @@
 package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.linux.input.MetricConfig;
-import org.apache.log4j.Logger;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -21,7 +22,7 @@ public class FileParser {
     private String description;
     private List<StatParser> parserList = new ArrayList<StatParser>();
 
-    private Logger logger  = Logger.getLogger(FileParser.class);
+    private Logger logger  = ExtensionsLoggerFactory.getLogger(FileParser.class);
 
     public FileParser(BufferedReader reader, String description) {
         this.reader = reader;

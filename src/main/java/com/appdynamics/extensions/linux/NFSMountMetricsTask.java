@@ -10,8 +10,9 @@ import com.appdynamics.extensions.MetricWriteHelper;
 import com.appdynamics.extensions.conf.MonitorContextConfiguration;
 import com.appdynamics.extensions.linux.input.MetricConfig;
 import com.appdynamics.extensions.linux.input.MetricStat;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.appdynamics.extensions.metrics.Metric;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
@@ -26,7 +27,7 @@ import java.util.concurrent.Phaser;
  */
 public class NFSMountMetricsTask implements Runnable {
 
-    private Logger logger = Logger.getLogger(NFSMountMetricsTask.class);
+    private Logger logger = ExtensionsLoggerFactory.getLogger(NFSMountMetricsTask.class);
 
     private static final String SPACE_REGEX = "[\t ]+";
 

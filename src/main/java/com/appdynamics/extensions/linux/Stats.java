@@ -9,10 +9,11 @@ package com.appdynamics.extensions.linux;
 
 import com.appdynamics.extensions.linux.input.MetricConfig;
 import com.appdynamics.extensions.linux.input.MetricStat;
+import com.appdynamics.extensions.logging.ExtensionsLoggerFactory;
 import com.appdynamics.extensions.metrics.Metric;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Joiner;
-import org.apache.log4j.Logger;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.slf4j.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import java.util.regex.Pattern;
 
 public class Stats {
 
-    private static Logger logger  = Logger.getLogger(Stats.class);
+    private static Logger logger  = ExtensionsLoggerFactory.getLogger(Stats.class);
 
     private List<Map<String, String>> metricReplacer;
 
