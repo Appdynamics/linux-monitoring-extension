@@ -203,6 +203,7 @@ public class Stats {
         logger.debug("Fetching diskusage metricStats");
         BufferedReader reader = null;
         Map<String, Object> stats = new HashMap<>();
+        List<Metric> metricData = new ArrayList<>();
         try {
             Process process = Runtime.getRuntime().exec(Constants.DISK_USAGE_CMD);
             process.waitFor();
@@ -239,7 +240,10 @@ public class Stats {
             }
         }
 
-        return generateMetrics(stats, "diskUsageStats");
+        for(Map.Entry entry: stats.entrySet()){
+            metricData.addAll(generateMetrics((Map<String, String>)entry.getValue(), "diskUsageStats", String.valueOf(entry.getKey())));
+        }
+        return metricData;
     }
 
     public List<Metric> getFileStats() {
