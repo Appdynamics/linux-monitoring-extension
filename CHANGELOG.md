@@ -1,5 +1,8 @@
 # AppDynamics Extensions Linux Monitor CHANGELOG
 
+## 2.1.4 - Jun5, 2020
+1. Disk Usgae Bug fix
+
 ## 2.1.3 - May 8, 2020
 1. Moved Linux monitor to commons 2.2.3 framework
 
