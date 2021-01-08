@@ -1,5 +1,7 @@
 # AppDynamics Extensions Linux Monitor CHANGELOG
 
+## 2.1.5 - Jan8, 2021
+1. Updated to appd-exts-commons 2.2.4
 
 ## 2.1.4 - Jun5, 2020
 1. Disk Usgae Bug fix
