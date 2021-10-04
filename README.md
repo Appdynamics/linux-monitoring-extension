@@ -7,14 +7,16 @@ This extension works only with the standalone machine agent. It has been tested 
 The Linux monitoring extension gathers metrics for a Linux machine and sends them to the AppDynamics Metric Browser.
 
 ## Pre-requisites
-Before the extension is installed, the prerequisites mentioned [here](https://community.appdynamics.com/t5/Knowledge-Base/Extensions-Prerequisites-Guide/ta-p/35213) need to be met. Please do not proceed with the extension installation if the specified prerequisites are not met.
+1. Before the extension is installed, the prerequisites mentioned [here](https://community.appdynamics.com/t5/Knowledge-Base/Extensions-Prerequisites-Guide/ta-p/35213) need to be met. Please do not proceed with the extension installation if the specified prerequisites are not met.
+
+2. Download and install [Apache Maven](https://maven.apache.org/) which is configured with `Java 8` to build the extension artifact from source. You can check the java version used in maven using command `mvn -v` or `mvn --version`. If your maven is using some other java version then please download java 8 for your platform and set JAVA_HOME parameter before starting maven.
 
 ## Installation
-
-1. To build from source, clone this repository and run 'mvn clean install'. This will produce a LinuxMonitor-VERSION.zip in the target directory. 
-2. Unzip LinuxMonitor-VERSION.zip from `target` directory into the `<MACHINE_AGENT_HOME>/monitors/`
-3. Configure the extension by referring to the below section.
-4. Restart the Machine Agent. 
+1. Clone the "linux-monitoring-extension" repo using `git clone <repoUrl>` command.
+2. Run 'mvn clean install' from "linux-monitoring-extension". This will produce a LinuxMonitor-VERSION.zip in the target directory. 
+3. Unzip LinuxMonitor-VERSION.zip from `target` directory into the `<MACHINE_AGENT_HOME>/monitors/`
+4. Configure the extension by referring to the below section.
+5. Restart the Machine Agent. 
  
 Please place the extension in the **"monitors"** directory of your **Machine Agent** installation directory. Do not place the extension in the **"extensions"** directory of your **Machine Agent** installation directory.
 
