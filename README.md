@@ -192,7 +192,7 @@ Please follow the steps listed in this [troubleshooting-document](https://commun
 
 ## Contributing
 
-Always feel free to fork and contribute any changes directly here on [GitHub](https://github.com/Appdynamics/apache-monitoring-extension/).
+Always feel free to fork and contribute any changes directly here on [GitHub](https://github.com/Appdynamics/linux-monitoring-extension/).
 
 ## Version
 |          Name            |  Version   |
