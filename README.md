@@ -195,11 +195,11 @@ Please follow the steps listed in this [troubleshooting-document](https://commun
 Always feel free to fork and contribute any changes directly here on [GitHub](https://github.com/Appdynamics/linux-monitoring-extension/).
 
 ## Version
-|          Name            |  Version   |
-|--------------------------|------------|
-|Extension Version         |2.1.5       |
-|Product Tested On         |Ubuntu 16.04|
-|Last Update               |08/01/2021  |
-|Changes list              |[ChangeLog](https://github.com/Appdynamics/linux-monitoring-extension/blob/master/CHANGELOG.md)|
+|          Name            |  Version         |
+|--------------------------|------------------|
+|Extension Version         |2.1.6             |
+|Product Tested On         |Ubuntu 24.04.1 LTS|
+|Last Update               |02/10/2024        |
+|Change List               |[ChangeLog](https://github.com/Appdynamics/linux-monitoring-extension/blob/master/CHANGELOG.md)|
 
 **Note**: While extensions are maintained and supported by customers under the open-source licensing model, they interact with agents and Controllers that are subject to [AppDynamics’ maintenance and support policy](https://docs.appdynamics.com/latest/en/product-and-release-announcements/maintenance-support-for-software-versions). Some extensions have been tested with AppDynamics 4.5.13+ artifacts, but you are strongly recommended against using versions that are no longer supported.
